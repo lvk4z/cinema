@@ -4,128 +4,152 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CinemaSync</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Mono:wght@400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.7/hls.min.js"></script>
 <style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --bg: #080808; --surface: #111; --border: #222;
-  --gold: #c9a84c; --gold-dim: #7a6430;
-  --text: #e8e0d0; --muted: #555;
-  --red: #c0392b; --green: #27ae60; --blue: #2980b9;
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080808;--surface:#111;--border:#222;
+  --gold:#c9a84c;--gold-dim:#7a6430;
+  --text:#e8e0d0;--muted:#555;
+  --red:#c0392b;--green:#27ae60;
 }
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; }
-#setup {
-  position: fixed; inset: 0; z-index: 100;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  background: var(--bg);
-  background-image: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,168,76,.08) 0%, transparent 70%);
-  overflow-y: auto; padding: 2rem 1rem;
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:hidden}
+
+/* ── SETUP ── */
+#setup{
+  position:fixed;inset:0;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg);
+  background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(201,168,76,.09) 0%,transparent 70%);
+  overflow-y:auto;padding:2rem 1rem;gap:.1rem;
 }
-.logo { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem,6vw,3.8rem); font-weight: 300; letter-spacing: .12em; color: var(--gold); text-transform: uppercase; margin-bottom: .3rem; }
-.logo-sub { font-size: .72rem; letter-spacing: .35em; color: var(--muted); text-transform: uppercase; margin-bottom: 3rem; }
-.card { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 2rem 2.5rem; width: min(430px, 94vw); margin-bottom: 1.2rem; }
-.card h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 400; letter-spacing: .08em; color: var(--gold); margin-bottom: 1.2rem; text-transform: uppercase; }
-.room-display { display: flex; align-items: center; gap: .6rem; background: #0d0d0d; border: 1px solid var(--border); border-radius: 2px; padding: .65rem 1rem; margin-bottom: 1rem; }
-.room-display code { font-family: 'DM Mono', monospace; font-size: .82rem; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sdot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background .4s; }
-.sdot.ready { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
-.sdot.err { background: var(--red); box-shadow: 0 0 6px var(--red); }
-.btn { display: block; width: 100%; padding: .72rem 1.2rem; background: transparent; border: 1px solid var(--gold-dim); border-radius: 2px; color: var(--gold); font-family: 'DM Sans', sans-serif; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: background .2s, border-color .2s; }
-.btn:hover { background: rgba(201,168,76,.08); border-color: var(--gold); }
-.btn.primary { background: var(--gold); color: #080808; border-color: var(--gold); font-weight: 500; }
-.btn.primary:hover { background: #d4b060; }
-.btn:disabled { opacity: .35; cursor: not-allowed; }
-.btn-ghost { display: inline-flex; align-items: center; gap: .4rem; background: none; border: none; color: var(--muted); font-size: .72rem; cursor: pointer; letter-spacing: .08em; text-transform: uppercase; padding: .4rem 0; font-family: 'DM Sans', sans-serif; transition: color .2s; }
-.btn-ghost:hover { color: var(--gold); }
-input[type=text] { width: 100%; padding: .7rem 1rem; background: #0d0d0d; border: 1px solid var(--border); border-radius: 2px; color: var(--text); font-family: 'DM Mono', monospace; font-size: .82rem; outline: none; transition: border-color .2s; margin-bottom: .8rem; }
-input[type=text]:focus { border-color: var(--gold-dim); }
-input[type=text]::placeholder { color: var(--muted); }
-.hint { font-size: .7rem; color: var(--muted); letter-spacing: .04em; line-height: 1.6; margin-top: .8rem; }
-.err-msg { font-size: .75rem; color: var(--red); margin-top: .6rem; display: none; line-height: 1.5; }
+.logo{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,6vw,3.8rem);font-weight:300;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:.25rem}
+.logo-sub{font-size:.7rem;letter-spacing:.35em;color:var(--muted);text-transform:uppercase;margin-bottom:2.5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:1.8rem 2.2rem;width:min(420px,94vw);margin-bottom:1rem}
+.card h2{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;letter-spacing:.08em;color:var(--gold);margin-bottom:1.1rem;text-transform:uppercase}
+.row-id{display:flex;align-items:center;gap:.6rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;padding:.6rem .9rem;margin-bottom:.9rem}
+.row-id code{font-family:'DM Mono',monospace;font-size:.8rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .4s}
+.dot.ok{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.dot.err{background:var(--red);box-shadow:0 0 5px var(--red)}
+.btn{display:block;width:100%;padding:.68rem 1.1rem;background:transparent;border:1px solid var(--gold-dim);border-radius:2px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .2s,border-color .2s}
+.btn:hover{background:rgba(201,168,76,.08);border-color:var(--gold)}
+.btn.fill{background:var(--gold);color:#080808;border-color:var(--gold);font-weight:500}
+.btn.fill:hover{background:#d4b060}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+input[type=text]{width:100%;padding:.68rem .9rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;outline:none;transition:border-color .2s;margin-bottom:.75rem}
+input[type=text]:focus{border-color:var(--gold-dim)}
+input[type=text]::placeholder{color:var(--muted)}
+.hint{font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:.7rem}
+.err{font-size:.72rem;color:var(--red);margin-top:.5rem;display:none;line-height:1.5}
+.ghost{display:inline-flex;align-items:center;gap:.35rem;background:none;border:none;color:var(--muted);font-size:.7rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;padding:.35rem 0;font-family:'DM Sans',sans-serif;transition:color .2s;margin-top:.5rem}
+.ghost:hover{color:var(--gold)}
 
-#loading {
-  position: fixed; inset: 0; z-index: 90;
-  display: none; flex-direction: column; align-items: center; justify-content: center;
-  background: var(--bg);
+/* ── WATCH SCREEN ── */
+#watch{display:none;position:fixed;inset:0;flex-direction:row}
+#va{flex:1;display:flex;flex-direction:column;min-width:0}
+#vw{flex:1;position:relative;background:#000;overflow:hidden}
+
+/* The iframe sits normally — sandbox blocks redirects */
+#vf{
+  position:absolute;inset:0;width:100%;height:100%;border:none;
+  /* sandbox: allow scripts + same-origin for player to work,
+     but NO allow-popups and NO allow-top-navigation → ads can't open new tabs or redirect */
+  sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-pointer-lock"
 }
-.loader-ring { width: 48px; height: 48px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1.5rem; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-text { font-size: .8rem; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); }
-.loader-step { font-size: .7rem; color: var(--muted); margin-top: .5rem; max-width: 340px; text-align: center; }
 
-#watch { display: none; position: fixed; inset: 0; flex-direction: row; }
-#video-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-#video-wrap { flex: 1; position: relative; background: #000; }
-#native-video { position: absolute; inset: 0; width: 100%; height: 100%; display: none; background: #000; }
-#iframe-video { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: none; }
-.mode-badge {
-  position: absolute; top: 10px; left: 10px; z-index: 5;
-  font-size: .6rem; letter-spacing: .1em; text-transform: uppercase;
-  padding: .22rem .55rem; border-radius: 2px; pointer-events: none;
+/* Thin transparent shield over the very top edge where most
+   "open new tab" ad overlays live. Pointer-events none elsewhere
+   so normal video clicks still work. */
+#ad-shield{
+  position:absolute;top:0;left:0;right:0;height:52px;
+  z-index:10;pointer-events:none;
+  /* becomes active (blocks clicks) only on the top strip */
 }
-.mode-badge.direct { background: rgba(39,174,96,.15); color: var(--green); border: 1px solid rgba(39,174,96,.3); }
-.mode-badge.ifr { background: rgba(201,168,76,.1); color: var(--gold-dim); border: 1px solid rgba(201,168,76,.2); }
 
-#syncbar { height: 56px; display: flex; align-items: center; gap: .7rem; padding: 0 1rem; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
-.peer-status { display: flex; align-items: center; gap: .45rem; font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
-.pdot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: background .4s; }
-.pdot.on { background: var(--green); box-shadow: 0 0 5px var(--green); }
-.pdot.off { background: var(--red); }
-.sync-btn { display: flex; align-items: center; gap: .4rem; padding: .45rem 1rem; background: transparent; border: 1px solid var(--border); border-radius: 2px; color: var(--text); font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: all .2s; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
-.sync-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
-.sync-btn:active { background: rgba(201,168,76,.1); }
-.sep { flex: 1; }
+.badge{
+  position:absolute;bottom:72px;left:12px;z-index:8;
+  font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:.2rem .5rem;border-radius:2px;pointer-events:none;
+  background:rgba(201,168,76,.1);color:var(--gold-dim);border:1px solid rgba(201,168,76,.18);
+  opacity:0;transition:opacity .5s;
+}
+.badge.show{opacity:1}
 
-#sidebar { width: 270px; display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--border); flex-shrink: 0; }
-#sidebar-header { padding: .9rem 1.1rem .7rem; border-bottom: 1px solid var(--border); font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 300; letter-spacing: .1em; color: var(--gold); display: flex; align-items: center; justify-content: space-between; }
-.room-pill { font-family: 'DM Mono', monospace; font-size: .58rem; color: var(--muted); border: 1px solid var(--border); border-radius: 2px; padding: .18rem .4rem; cursor: pointer; transition: color .2s, border-color .2s; }
-.room-pill:hover { color: var(--gold); border-color: var(--gold-dim); }
-#messages { flex: 1; overflow-y: auto; padding: .8rem; display: flex; flex-direction: column; gap: .45rem; }
-#messages::-webkit-scrollbar { width: 3px; }
-#messages::-webkit-scrollbar-thumb { background: var(--border); }
-.msg { padding: .42rem .65rem; border-radius: 2px; font-size: .78rem; line-height: 1.5; max-width: 96%; }
-.msg.me { background: rgba(201,168,76,.1); border: 1px solid rgba(201,168,76,.15); align-self: flex-end; }
-.msg.partner { background: #181818; border: 1px solid var(--border); align-self: flex-start; }
-.msg.system { background: transparent; border: none; color: var(--muted); font-size: .67rem; letter-spacing: .05em; align-self: center; text-align: center; }
-.msg .who { font-size: .6rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .15rem; }
-#chat-input-row { padding: .65rem .75rem; border-top: 1px solid var(--border); display: flex; gap: .5rem; }
-#chat-input { flex: 1; padding: .5rem .75rem; background: #0d0d0d; border: 1px solid var(--border); border-radius: 2px; color: var(--text); font-size: .78rem; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color .2s; }
-#chat-input:focus { border-color: var(--gold-dim); }
-#chat-input::placeholder { color: var(--muted); }
-#chat-send { padding: .5rem .85rem; background: transparent; border: 1px solid var(--border); border-radius: 2px; color: var(--gold); font-size: .9rem; cursor: pointer; transition: all .2s; }
-#chat-send:hover { background: rgba(201,168,76,.1); border-color: var(--gold-dim); }
+/* ── SYNCBAR ── */
+#syncbar{
+  height:52px;display:flex;align-items:center;gap:.6rem;
+  padding:0 .9rem;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0
+}
+.pstat{display:flex;align-items:center;gap:.4rem;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.pdot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .4s}
+.pdot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
+.pdot.off{background:var(--red)}
+.sbtn{display:flex;align-items:center;gap:.35rem;padding:.4rem .85rem;background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.sbtn:hover{border-color:var(--gold-dim);color:var(--gold)}
+.sbtn:active{background:rgba(201,168,76,.1)}
+.sep{flex:1}
 
-#overlay { position: fixed; inset: 0; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,.82); backdrop-filter: blur(4px); }
-#overlay-card { background: var(--surface); border: 1px solid var(--gold-dim); border-radius: 2px; padding: 2.5rem 3rem; text-align: center; max-width: 380px; width: 90vw; animation: slideUp .25s ease; }
-@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-#overlay-icon { font-size: 2.8rem; margin-bottom: .7rem; }
-#overlay-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 400; color: var(--gold); margin-bottom: .5rem; }
-#overlay-msg { font-size: .82rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
-#overlay-dismiss { padding: .6rem 2rem; background: var(--gold); color: #080808; border: none; border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 500; cursor: pointer; transition: background .2s; }
-#overlay-dismiss:hover { background: #d4b060; }
+/* ── SIDEBAR (desktop only) ── */
+#sidebar{width:265px;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border);flex-shrink:0}
+#sh{padding:.85rem 1rem .65rem;border-bottom:1px solid var(--border);font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:300;letter-spacing:.1em;color:var(--gold);display:flex;align-items:center;justify-content:space-between}
+.rpill{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--muted);border:1px solid var(--border);border-radius:2px;padding:.16rem .38rem;cursor:pointer;transition:color .2s,border-color .2s}
+.rpill:hover{color:var(--gold);border-color:var(--gold-dim)}
+#msgs{flex:1;overflow-y:auto;padding:.7rem;display:flex;flex-direction:column;gap:.4rem}
+#msgs::-webkit-scrollbar{width:3px}
+#msgs::-webkit-scrollbar-thumb{background:var(--border)}
+.msg{padding:.38rem .6rem;border-radius:2px;font-size:.76rem;line-height:1.5;max-width:96%}
+.msg.me{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.15);align-self:flex-end}
+.msg.partner{background:#181818;border:1px solid var(--border);align-self:flex-start}
+.msg.sys{background:transparent;border:none;color:var(--muted);font-size:.64rem;letter-spacing:.04em;align-self:center;text-align:center}
+.msg .who{font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.12rem}
+#cir{padding:.6rem .7rem;border-top:1px solid var(--border);display:flex;gap:.45rem}
+#ci{flex:1;padding:.48rem .7rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:.76rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
+#ci:focus{border-color:var(--gold-dim)}
+#ci::placeholder{color:var(--muted)}
+#cs{padding:.48rem .8rem;background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--gold);font-size:.9rem;cursor:pointer;transition:all .2s}
+#cs:hover{background:rgba(201,168,76,.1);border-color:var(--gold-dim)}
 
-#help-modal { position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.88); backdrop-filter: blur(4px); }
-#help-card { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 2.5rem; width: min(540px, 94vw); max-height: 90vh; overflow-y: auto; animation: slideUp .25s ease; }
-#help-card h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; color: var(--gold); letter-spacing: .08em; margin-bottom: 1.5rem; }
-.step { display: flex; gap: 1rem; margin-bottom: 1.2rem; }
-.step-num { width: 24px; height: 24px; border-radius: 50%; background: rgba(201,168,76,.15); border: 1px solid var(--gold-dim); color: var(--gold); font-size: .72rem; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
-.step-body strong { display: block; font-size: .85rem; color: var(--text); margin-bottom: .3rem; }
-.step-body p { font-size: .78rem; color: var(--muted); line-height: 1.6; }
-.step-body code { font-family: 'DM Mono', monospace; font-size: .75rem; background: #0d0d0d; border: 1px solid var(--border); border-radius: 2px; padding: .15rem .4rem; color: var(--text); }
-.divider-h { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
-.info-box { background: rgba(41,128,185,.08); border: 1px solid rgba(41,128,185,.25); border-radius: 2px; padding: 1rem 1.2rem; margin-bottom: 1rem; }
-.info-box p { font-size: .78rem; color: #7fb3d3; line-height: 1.6; }
+/* ── OVERLAY ── */
+#ov{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.82);backdrop-filter:blur(4px)}
+#oc{background:var(--surface);border:1px solid var(--gold-dim);border-radius:2px;padding:2.2rem 2.8rem;text-align:center;max-width:360px;width:90vw;animation:su .22s ease}
+@keyframes su{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+#oi{font-size:2.6rem;margin-bottom:.6rem}
+#ot{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:400;color:var(--gold);margin-bottom:.45rem}
+#om{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:1.4rem}
+#od{padding:.55rem 1.8rem;background:var(--gold);color:#080808;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;cursor:pointer}
+#od:hover{background:#d4b060}
 
-#toast { position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: .5rem 1.1rem; font-size: .73rem; letter-spacing: .06em; color: var(--muted); opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; white-space: nowrap; z-index: 400; }
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* ── HELP ── */
+#hm{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.88);backdrop-filter:blur(4px)}
+#hc{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:2.2rem;width:min(520px,94vw);max-height:90vh;overflow-y:auto;animation:su .22s ease}
+#hc h2{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;color:var(--gold);letter-spacing:.08em;margin-bottom:1.3rem}
+.st{display:flex;gap:.9rem;margin-bottom:1.1rem}
+.sn{width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,.15);border:1px solid var(--gold-dim);color:var(--gold);font-size:.68rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.08rem}
+.sb strong{display:block;font-size:.82rem;color:var(--text);margin-bottom:.25rem}
+.sb p{font-size:.75rem;color:var(--muted);line-height:1.6}
+.sb code{font-family:'DM Mono',monospace;font-size:.72rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;padding:.12rem .35rem;color:var(--text)}
+.dh{border:none;border-top:1px solid var(--border);margin:1.3rem 0}
+.ibox{background:rgba(41,128,185,.07);border:1px solid rgba(41,128,185,.22);border-radius:2px;padding:.9rem 1.1rem;margin-bottom:.9rem}
+.ibox p{font-size:.75rem;color:#7fb3d3;line-height:1.6}
 
-@keyframes ping { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
-.pinging { position: relative; }
-.pinging::after { content: ''; position: absolute; inset: 0; border-radius: 2px; border: 1px solid var(--gold); animation: ping .5s ease forwards; pointer-events: none; }
+/* ── TOAST ── */
+#toast{position:fixed;bottom:66px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:.45rem 1rem;font-size:.7rem;letter-spacing:.05em;color:var(--muted);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;white-space:nowrap;z-index:400}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── PING ── */
+@keyframes ping{0%{transform:scale(1);opacity:1}100%{transform:scale(1.7);opacity:0}}
+.pinging{position:relative}
+.pinging::after{content:'';position:absolute;inset:0;border-radius:2px;border:1px solid var(--gold);animation:ping .5s ease forwards;pointer-events:none}
+
+/* ── MOBILE / TABLET ── */
+@media(max-width:768px){
+  #sidebar{display:none !important}
+  #syncbar{gap:.4rem;padding:0 .6rem}
+  .sbtn{padding:.38rem .6rem;font-size:.68rem}
+  .pstat{display:none}
+}
 </style>
 </head>
 <body>
@@ -137,213 +161,187 @@ input[type=text]::placeholder { color: var(--muted); }
 
   <div class="card">
     <h2>Host a session</h2>
-    <div class="room-display">
-      <span class="sdot" id="host-dot"></span>
-      <code id="room-code">Connecting to relay…</code>
+    <div class="row-id">
+      <span class="dot" id="hdot"></span>
+      <code id="rc">Connecting to relay…</code>
     </div>
-    <div class="err-msg" id="peer-err"></div>
-    <button class="btn" id="copy-link-btn" disabled onclick="copyLink()">Copy invite link</button>
-    <div class="hint">Share the link with your partner. She opens it and auto-joins.</div>
+    <div class="err" id="perr"></div>
+    <button class="btn" id="clb" disabled onclick="copyLink()">Copy invite link</button>
+    <div class="hint">Share this link — she opens it and auto-joins.</div>
   </div>
 
   <div class="card">
     <h2>Join a session</h2>
-    <input type="text" id="join-input" placeholder="Paste room code here" />
-    <button class="btn primary" onclick="joinRoom()">Join room</button>
+    <input type="text" id="ji" placeholder="Paste room code here" />
+    <button class="btn fill" onclick="joinRoom()">Join room</button>
   </div>
 
-  <button class="btn-ghost" onclick="showHelp()">📖 How to deploy on GitHub Pages (free)</button>
-</div>
-
-<!-- LOADING -->
-<div id="loading">
-  <div class="loader-ring"></div>
-  <div class="loader-text">Preparing stream</div>
-  <div class="loader-step" id="loader-step">Starting…</div>
+  <button class="ghost" onclick="showHelp()">📖 GitHub Pages deploy guide</button>
 </div>
 
 <!-- WATCH -->
 <div id="watch">
-  <div id="video-area">
-    <div id="video-wrap">
-      <video id="native-video" controls playsinline></video>
-      <iframe id="iframe-video" src="about:blank" allowfullscreen allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
-      <div class="mode-badge" id="mode-badge"></div>
+  <div id="va">
+    <div id="vw">
+      <!--
+        sandbox WITHOUT allow-popups and allow-top-navigation
+        → the iframe JS cannot open new tabs, cannot redirect the parent page
+        → ads that try window.open() or location.href = '...' are silently blocked
+        → the video player itself still works fine
+      -->
+      <iframe id="vf"
+        src="about:blank"
+        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+        referrerpolicy="no-referrer"
+        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-pointer-lock"
+      ></iframe>
+      <div class="badge" id="badge"></div>
     </div>
+
     <div id="syncbar">
-      <div class="peer-status">
-        <span class="pdot" id="peer-dot"></span>
-        <span id="peer-label">Waiting…</span>
+      <div class="pstat">
+        <span class="pdot" id="pdot"></span>
+        <span id="plbl">Waiting…</span>
       </div>
-      <button class="sync-btn" id="btn-pause" onclick="doSync('pause')">⏸ Pause together</button>
-      <button class="sync-btn" id="btn-play"  onclick="doSync('play')">▶ Play together</button>
-      <button class="sync-btn" id="btn-seek"  onclick="doSync('seek')" title="Send your timestamp to partner">⟳ Sync time</button>
+      <button class="sbtn" id="bp" onclick="doSync('pause')">⏸ Pause</button>
+      <button class="sbtn" id="bpl" onclick="doSync('play')">▶ Play</button>
+      <button class="sbtn" id="bs" onclick="doSync('seek')" title="Send current time to partner">⟳ Sync time</button>
       <div class="sep"></div>
-      <button class="sync-btn" onclick="leaveRoom()" style="color:var(--muted);font-size:.68rem;">✕ Leave</button>
+      <button class="sbtn" onclick="leaveRoom()" style="color:var(--muted);font-size:.66rem">✕ Leave</button>
     </div>
   </div>
 
   <div id="sidebar">
-    <div id="sidebar-header">
+    <div id="sh">
       Chat
-      <span class="room-pill" id="sidebar-room" onclick="copyLink()" title="Copy invite link">—</span>
+      <span class="rpill" id="rp" onclick="copyLink()" title="Copy invite link">—</span>
     </div>
-    <div id="messages"></div>
-    <div id="chat-input-row">
-      <input type="text" id="chat-input" placeholder="Message…" maxlength="300" onkeydown="if(event.key==='Enter') sendChat()" />
-      <button id="chat-send" onclick="sendChat()">↑</button>
+    <div id="msgs"></div>
+    <div id="cir">
+      <input type="text" id="ci" placeholder="Message…" maxlength="280"
+        onkeydown="if(event.key==='Enter')sendChat()" />
+      <button id="cs" onclick="sendChat()">↑</button>
     </div>
   </div>
 </div>
 
 <!-- SYNC OVERLAY -->
-<div id="overlay" onclick="dismissOverlay(event)">
-  <div id="overlay-card">
-    <div id="overlay-icon"></div>
-    <div id="overlay-title"></div>
-    <div id="overlay-msg"></div>
-    <button id="overlay-dismiss" onclick="dismissOverlay()">Done</button>
+<div id="ov" onclick="dimOv(event)">
+  <div id="oc">
+    <div id="oi"></div>
+    <div id="ot"></div>
+    <div id="om"></div>
+    <button id="od" onclick="dimOv()">Done</button>
   </div>
 </div>
 
 <!-- GITHUB PAGES HELP -->
-<div id="help-modal" onclick="hideHelp(event)">
-  <div id="help-card">
+<div id="hm" onclick="hideHelp(event)">
+  <div id="hc">
     <h2>Deploy on GitHub Pages — Free</h2>
-
-    <div class="info-box">
-      <p>⚠ <strong>You must serve this file over HTTPS</strong> — PeerJS WebRTC and the stream extractor both require it. Opening the file as <code>file://</code> causes the PeerJS error you saw. GitHub Pages gives you HTTPS automatically at no cost.</p>
+    <div class="ibox">
+      <p>⚠ <strong>HTTPS is required.</strong> PeerJS WebRTC won't work on <code>file://</code> — it only works when served over HTTP(S). GitHub Pages gives you a free HTTPS URL in ~60 seconds.</p>
     </div>
-
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <strong>Create a GitHub account</strong>
-        <p>Go to <code>github.com</code> → Sign up (free).</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <strong>Create a new public repository</strong>
-        <p>Click <code>+</code> → <code>New repository</code>. Give it any name, e.g. <code>cinemasync</code>. Select <strong>Public</strong>. Click <code>Create repository</code>.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <strong>Upload the HTML file as index.html</strong>
-        <p>On the repo page click <code>uploading an existing file</code>. Drag the downloaded <code>cinemasync.html</code> in. <strong>Rename it to <code>index.html</code></strong> in the filename field. Click <code>Commit changes</code>.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <div class="step-body">
-        <strong>Enable GitHub Pages</strong>
-        <p>Go to <code>Settings</code> → <code>Pages</code>. Under <em>Build and deployment → Branch</em>, select <code>main</code> and <code>/ (root)</code>, click <code>Save</code>.</p>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">5</div>
-      <div class="step-body">
-        <strong>Your app is live in ~60 seconds</strong>
-        <p>URL: <code>https://YOUR-USERNAME.github.io/cinemasync/</code><br />Open it, click <strong>Copy invite link</strong>, send it to her. Done ♥</p>
-      </div>
-    </div>
-
-    <hr class="divider-h" />
-
-    <div class="step">
-      <div class="step-num" style="background:rgba(201,168,76,.1);border-color:var(--gold-dim);color:var(--gold);">★</div>
-      <div class="step-body">
+    <div class="st"><div class="sn">1</div><div class="sb"><strong>Create a GitHub account</strong><p>Go to <code>github.com</code> → Sign up (free).</p></div></div>
+    <div class="st"><div class="sn">2</div><div class="sb"><strong>New public repository</strong><p>Click <code>+</code> → <code>New repository</code>. Name it e.g. <code>cinemasync</code>. Set to <strong>Public</strong>. Click <code>Create repository</code>.</p></div></div>
+    <div class="st"><div class="sn">3</div><div class="sb"><strong>Upload file as index.html</strong><p>On the repo page click <code>uploading an existing file</code>. Drag the file in. <strong>Rename it to <code>index.html</code></strong>. Click <code>Commit changes</code>.</p></div></div>
+    <div class="st"><div class="sn">4</div><div class="sb"><strong>Enable GitHub Pages</strong><p>Go to <code>Settings → Pages</code>. Under <em>Branch</em> select <code>main</code> and <code>/ (root)</code>, click <code>Save</code>.</p></div></div>
+    <div class="st"><div class="sn">5</div><div class="sb"><strong>Done — share your URL</strong><p>Your app is live at <code>https://YOUR-USERNAME.github.io/cinemasync/</code>. Open it, copy the invite link, send to her. ♥</p></div></div>
+    <hr class="dh"/>
+    <div class="st">
+      <div class="sn" style="background:rgba(201,168,76,.1);border-color:var(--gold-dim);color:var(--gold)">★</div>
+      <div class="sb">
         <strong>How sync works</strong>
-        <p>The app tries to extract the direct video stream URL from the page. If it succeeds → native <code>&lt;video&gt;</code> element with <strong>automatic real-time sync</strong> (pause, play, seek all propagate instantly). If the extraction fails due to CORS or obfuscation → iframe fallback with <strong>signal-based sync</strong> (buttons send "pause now" / "play now" prompts to your partner).</p>
+        <p>The app sends <strong>postMessage</strong> commands directly to the VidFast player (pause/play/seek). Both players receive the same command at the same time via PeerJS P2P. Clicking on the video no longer redirects anywhere — the iframe runs in a <strong>sandbox</strong> that blocks popups and page navigations from ad scripts.</p>
       </div>
     </div>
-
-    <button class="btn primary" style="margin-top:1.5rem" onclick="hideHelp()">Got it</button>
+    <button class="btn fill" style="margin-top:1.3rem" onclick="hideHelp()">Got it</button>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════════
-const SOURCE_URL = 'https://vidfast.pro/movie/687163?autoPlay=true';
+// ═══════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════
+const VIDEO_SRC = 'https://vidfast.pro/movie/687163?autoPlay=true';
 
-const PROXIES = [
-  u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-  u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-];
+// postMessage commands to try — VidFast uses a videojs-based player.
+// We broadcast all known formats so at least one lands.
+function msgPause() { return [
+  'pause',
+  JSON.stringify({event:'command',func:'pause',args:[]}),
+  JSON.stringify({action:'pause'}),
+  JSON.stringify({type:'pause'}),
+  JSON.stringify({method:'pause'}),
+]; }
+function msgPlay() { return [
+  'play',
+  JSON.stringify({event:'command',func:'play',args:[]}),
+  JSON.stringify({action:'play'}),
+  JSON.stringify({type:'play'}),
+  JSON.stringify({method:'play'}),
+]; }
+function msgSeek(t) { return [
+  JSON.stringify({event:'command',func:'seekTo',args:[t,true]}),
+  JSON.stringify({action:'seek',time:t}),
+  JSON.stringify({type:'seek',time:t}),
+  JSON.stringify({method:'seek',time:t}),
+  JSON.stringify({currentTime:t}),
+]; }
 
-const VIDEO_PATTERNS = [
-  /(https?:\/\/[^\s"'`<>\\]+\.m3u8[^\s"'`<>\\]*)/g,
-  /(https?:\/\/[^\s"'`<>\\]+\.mp4[^\s"'`<>\\]*)/g,
-  /(?:file|src|source|stream|url|videoUrl|streamUrl|hls|hlsUrl)["\s]*[:=]["\s]*(https?:\/\/[^\s"'`<>\\,\]]+)/gi,
-  /["'`](https?:\/\/[^"'`\s]+(?:stream|video|media|play)[^"'`\s]*)/gi,
-];
-
-// ══════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
 let peer, conn, myId;
-let connected  = false;
-let syncLock   = false;
-let videoMode  = 'iframe';
-const vid      = document.getElementById('native-video');
+let connected = false;
+let syncLock  = false;
+let currentTs = 0; // track time from player events
 
-// ══════════════════════════════════════════
-// PEERJS  — fixed: no hardcoded host/path
-// ══════════════════════════════════════════
+const iframe = document.getElementById('vf');
+
+// ═══════════════════════════════════════════════════
+//  PEERJS
+// ═══════════════════════════════════════════════════
 function initPeer() {
-  // new Peer() with no host args uses peerjs.com cloud correctly.
-  // Hardcoding host:'0.peerjs.com' with path:'/' was the old API and caused errors.
   peer = new Peer(undefined, {
-    config: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:global.stun.twilio.com:3478' },
-      ]
-    },
+    config: { iceServers: [
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'},
+      {urls:'stun:global.stun.twilio.com:3478'},
+    ]},
     debug: 0,
   });
 
   peer.on('open', id => {
     myId = id;
-    document.getElementById('room-code').textContent = id;
-    document.getElementById('host-dot').classList.add('ready');
-    document.getElementById('copy-link-btn').disabled = false;
-    const joinId = new URLSearchParams(location.search).get('join');
-    if (joinId && joinId !== id) {
-      document.getElementById('join-input').value = joinId;
-      setTimeout(() => joinRoom(joinId), 500);
+    document.getElementById('rc').textContent = id;
+    document.getElementById('hdot').classList.add('ok');
+    document.getElementById('clb').disabled = false;
+    const j = new URLSearchParams(location.search).get('join');
+    if (j && j !== id) {
+      document.getElementById('ji').value = j;
+      setTimeout(() => joinRoom(j), 500);
     }
   });
 
   peer.on('connection', c => setupConn(c));
 
   peer.on('error', err => {
-    const el = document.getElementById('peer-err');
+    const el = document.getElementById('perr');
     el.style.display = 'block';
-    document.getElementById('host-dot').classList.remove('ready');
-    document.getElementById('host-dot').classList.add('err');
-
+    document.getElementById('hdot').classList.remove('ok');
+    document.getElementById('hdot').classList.add('err');
     if (location.protocol === 'file:') {
-      el.innerHTML = '⚠ You opened this as a local file — PeerJS requires HTTPS.<br>Deploy to GitHub Pages (see guide below), then try again.';
-      return;
-    }
-    const type = err.type || '';
-    if (type === 'network' || type === 'server-error') {
-      el.textContent = '⚠ Cannot reach relay server. Retrying in 5 s…';
+      el.innerHTML = '⚠ You opened this as <code>file://</code> — PeerJS needs HTTPS.<br>Deploy to GitHub Pages (see guide below).';
+    } else if (err.type === 'network' || err.type === 'server-error') {
+      el.textContent = '⚠ Cannot reach relay. Retrying in 5 s…';
       setTimeout(reinitPeer, 5000);
-    } else if (type === 'unavailable-id') {
+    } else if (err.type === 'unavailable-id') {
       reinitPeer();
     } else {
-      el.textContent = `⚠ ${err.message || err.type || 'Connection error — check console.'}`;
+      el.textContent = '⚠ ' + (err.message || err.type || 'Connection error');
     }
   });
 
@@ -355,13 +353,13 @@ function reinitPeer() {
   initPeer();
 }
 
-// ══════════════════════════════════════════
-// CONNECT
-// ══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  CONNECT
+// ═══════════════════════════════════════════════════
 function joinRoom(id) {
-  const target = id || document.getElementById('join-input').value.trim();
+  const target = id || document.getElementById('ji').value.trim();
   if (!target) return;
-  if (!myId) { showToast('Still connecting to relay, try again shortly…'); return; }
+  if (!myId) { showToast('Still connecting to relay…'); return; }
   const c = peer.connect(target, { reliable: true, serialization: 'json' });
   c.on('open', () => setupConn(c));
   c.on('error', e => showToast('Could not connect: ' + (e.message || e)));
@@ -369,7 +367,7 @@ function joinRoom(id) {
 
 function setupConn(c) {
   conn = c;
-  conn.on('data',  handleData);
+  conn.on('data', handleData);
   conn.on('close', handleDisconnect);
   conn.on('error', handleDisconnect);
   onConnected();
@@ -377,248 +375,160 @@ function setupConn(c) {
 
 function onConnected() {
   connected = true;
-  beginSession();
-}
 
-async function beginSession() {
-  showLoading();
-  const directUrl = await extractVideoUrl();
+  // Show watch screen & load iframe
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('watch').style.display = 'flex';
+  loadIframe();
 
-  if (directUrl) {
-    try {
-      await loadDirect(directUrl);
-      videoMode = 'direct';
-      setBadge('direct', '⚡ Direct stream — real sync');
-    } catch(e) {
-      console.warn('Direct load failed, falling back to iframe', e);
-      loadIframe();
-      videoMode = 'iframe';
-      setBadge('ifr', '⬜ Iframe — signal sync');
-    }
-  } else {
-    loadIframe();
-    videoMode = 'iframe';
-    setBadge('ifr', '⬜ Iframe — signal sync');
-  }
-
-  showWatch();
-  document.getElementById('peer-dot').classList.add('on');
-  document.getElementById('peer-label').textContent = 'Partner connected';
-  document.getElementById('sidebar-room').textContent = myId ? myId.slice(0,8)+'…' : '—';
-  sysMsg(videoMode === 'direct'
-    ? '🟢 Connected · Direct stream loaded. Pause/play/seek sync automatically!'
-    : '🟢 Connected · Iframe mode — use the sync buttons to coordinate.'
-  );
+  document.getElementById('pdot').classList.add('on');
+  document.getElementById('plbl').textContent = 'Partner connected';
+  document.getElementById('rp').textContent = myId ? myId.slice(0,8)+'…' : '—';
+  sysMsg('🟢 Connected · Kliknij ▶ Play lub ⏸ Pause — obie strony zsynchronizują się.');
+  showBadge('Sandbox mode — redirecty zablokowane');
 }
 
 function handleDisconnect() {
   connected = false;
-  document.getElementById('peer-dot').classList.remove('on');
-  document.getElementById('peer-dot').classList.add('off');
-  document.getElementById('peer-label').textContent = 'Partner disconnected';
-  sysMsg('🔴 Partner disconnected.');
+  document.getElementById('pdot').classList.remove('on');
+  document.getElementById('pdot').classList.add('off');
+  document.getElementById('plbl').textContent = 'Partnerka rozłączona';
+  sysMsg('🔴 Partnerka rozłączona.');
 }
 
-// ══════════════════════════════════════════
-// VIDEO BYPASS — extract URL via CORS proxy
-// ══════════════════════════════════════════
-async function extractVideoUrl() {
-  loaderStep('Attempting to extract direct video URL…');
+// ═══════════════════════════════════════════════════
+//  IFRAME
+// ═══════════════════════════════════════════════════
+function loadIframe() {
+  iframe.src = VIDEO_SRC;
 
-  for (let i = 0; i < PROXIES.length; i++) {
-    loaderStep(`Trying proxy ${i+1} of ${PROXIES.length}…`);
-    try {
-      const resp = await fetch(PROXIES[i](SOURCE_URL), {
-        signal: AbortSignal.timeout(9000)
-      });
-      if (!resp.ok) continue;
-
-      let html;
-      const ct = resp.headers.get('content-type') || '';
-      if (ct.includes('json')) {
-        const j = await resp.json();
-        html = j.contents || j.data || JSON.stringify(j);
-      } else {
-        html = await resp.text();
-      }
-
-      for (const re of VIDEO_PATTERNS) {
-        re.lastIndex = 0;
-        for (const m of html.matchAll(re)) {
-          const raw = (m[1] || '').replace(/\\+/g,'').replace(/["'`]/g,'');
-          if (raw.startsWith('http') && (raw.includes('.m3u8') || raw.includes('.mp4') || raw.includes('stream') || raw.includes('video'))) {
-            loaderStep('Found stream URL ✓');
-            return raw;
-          }
-        }
-      }
-    } catch(e) {
-      console.warn('Proxy', i+1, 'failed:', e.message);
+  // Listen for any postMessages coming OUT of the iframe
+  // (some players emit timeupdate, play, pause events)
+  window.addEventListener('message', e => {
+    if (!e.data) return;
+    let d = e.data;
+    if (typeof d === 'string') {
+      try { d = JSON.parse(d); } catch(_) { return; }
     }
-  }
+    // Extract current time if player emits it
+    const t = d.currentTime ?? d.time ?? d.position ?? d.seconds;
+    if (typeof t === 'number') currentTs = t;
 
-  loaderStep('Extraction failed — using iframe fallback.');
-  return null;
-}
-
-// ══════════════════════════════════════════
-// VIDEO LOADING
-// ══════════════════════════════════════════
-function loadDirect(url) {
-  return new Promise((resolve, reject) => {
-    loaderStep('Loading stream…');
-    vid.style.display = 'block';
-
-    const done = () => { vid.removeEventListener('error', fail); resolve(); };
-    const fail = () => { vid.style.display = 'none'; reject(new Error('video error')); };
-    vid.addEventListener('canplay', done, { once: true });
-    vid.addEventListener('error',   fail, { once: true });
-    setTimeout(() => fail(), 15000); // timeout
-
-    if (url.includes('.m3u8') && typeof Hls !== 'undefined' && Hls.isSupported()) {
-      const hls = new Hls({ enableWorker: false });
-      hls.loadSource(url);
-      hls.attachMedia(vid);
-      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) fail(); });
-    } else if (vid.canPlayType('application/vnd.apple.mpegurl') && url.includes('.m3u8')) {
-      vid.src = url;
-    } else {
-      vid.src = url;
-    }
-
-    // Attach real-time sync events
-    vid.addEventListener('pause',  () => { if (!syncLock) broadcast({ t:'sync', a:'pause', ts: vid.currentTime }); });
-    vid.addEventListener('play',   () => { if (!syncLock) broadcast({ t:'sync', a:'play',  ts: vid.currentTime }); });
-    vid.addEventListener('seeked', () => { if (!syncLock) broadcast({ t:'sync', a:'seek',  ts: vid.currentTime }); });
+    // If player emits pause/play events, forward to partner
+    if (syncLock) return;
+    const ev = (d.event || d.type || d.action || '').toLowerCase();
+    if (ev === 'pause') broadcast({t:'sync',a:'pause',ts:currentTs});
+    if (ev === 'play')  broadcast({t:'sync',a:'play', ts:currentTs});
   });
 }
 
-function loadIframe() {
-  const ifr = document.getElementById('iframe-video');
-  ifr.src = SOURCE_URL;
-  ifr.style.display = 'block';
+// Send commands to the iframe player
+function playerCmd(msgs) {
+  for (const m of msgs) {
+    try { iframe.contentWindow.postMessage(m, '*'); } catch(_) {}
+  }
 }
 
-function setBadge(cls, text) {
-  const b = document.getElementById('mode-badge');
-  b.className = 'mode-badge ' + cls;
-  b.textContent = text;
-}
-
-// ══════════════════════════════════════════
-// SYNC
-// ══════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  SYNC
+// ═══════════════════════════════════════════════════
 function doSync(action) {
-  if (!connected || !conn) { showToast('Not connected to a partner.'); return; }
+  if (!connected || !conn) { showToast('Brak połączenia z partnerką.'); return; }
 
-  if (videoMode === 'direct') {
-    syncLock = true;
-    if (action === 'pause') vid.pause();
-    if (action === 'play')  vid.play().catch(()=>{});
-    setTimeout(() => syncLock = false, 600);
-  }
+  // Send to local player immediately
+  syncLock = true;
+  if (action === 'pause') playerCmd(msgPause());
+  if (action === 'play')  playerCmd(msgPlay());
+  if (action === 'seek')  playerCmd(msgSeek(currentTs));
+  setTimeout(() => syncLock = false, 600);
 
-  const ts = videoMode === 'direct' ? vid.currentTime : null;
-  broadcast({ t:'sync', a: action, ts });
+  // Send to partner
+  broadcast({t:'sync', a:action, ts:currentTs});
 
-  const map = { pause: 'btn-pause', play: 'btn-play', seek: 'btn-seek' };
+  const map = {pause:'bp', play:'bpl', seek:'bs'};
   const btn = document.getElementById(map[action]);
-  if (btn) { btn.classList.add('pinging'); setTimeout(() => btn.classList.remove('pinging'), 500); }
+  if (btn) { btn.classList.add('pinging'); setTimeout(()=>btn.classList.remove('pinging'),500); }
 
-  if (videoMode === 'iframe') {
-    const msgs = { pause:'Pause signal sent ⏸', play:'Play signal sent ▶', seek:'Seek signal sent ⟳' };
-    showToast(msgs[action]);
-  }
+  sysMsg({pause:'⏸ Pauza wysłana.', play:'▶ Play wysłany.', seek:'⟳ Czas zsynchronizowany.'}[action]);
 }
 
 function applySync(d) {
-  if (videoMode === 'direct') {
-    syncLock = true;
-    if (d.ts != null) vid.currentTime = d.ts;
-    if (d.a === 'pause') vid.pause();
-    if (d.a === 'play')  vid.play().catch(()=>{});
-    setTimeout(() => syncLock = false, 600);
-    sysMsg(`⟳ Synced to ${fmtTime(d.ts)} · ${d.a}`);
-  } else {
-    const map = {
-      pause: ['⏸', 'Pause your video!',  'Your partner paused. Pause now to stay in sync.'],
-      play:  ['▶',  'Press play!',        'Your partner pressed play. Hit play now.'],
-      seek:  ['⟳',  'Seek to ' + fmtTime(d.ts), d.ts != null ? `Jump to ${fmtTime(d.ts)} in your player.` : 'Seek to match your partner.'],
-    };
-    const [icon, title, msg] = map[d.a] || ['ℹ','Sync','Follow your partner.'];
-    showOverlay(icon, title, msg);
+  syncLock = true;
+  if (d.ts != null) {
+    currentTs = d.ts;
+    playerCmd(msgSeek(d.ts));
   }
+  if (d.a === 'pause') playerCmd(msgPause());
+  if (d.a === 'play')  playerCmd(msgPlay());
+  setTimeout(() => syncLock = false, 600);
+  sysMsg(`⟳ ${d.a === 'pause' ? '⏸ Partnerka pauzuje' : d.a === 'play' ? '▶ Partnerka odtwarza' : '⟳ Czas: '+fmtTime(d.ts)}`);
 }
 
 function broadcast(data) {
-  if (connected && conn) conn.send(data);
+  if (connected && conn) try { conn.send(data); } catch(_) {}
 }
 
-// ══════════════════════════════════════════
-// DATA HANDLER
-// ══════════════════════════════════════════
-function handleData(data) {
-  if (!data) return;
-  if (data.t === 'sync') applySync(data);
-  if (data.t === 'chat') addMsg('partner', data.text);
+// ═══════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════
+function handleData(d) {
+  if (!d) return;
+  if (d.t === 'sync') applySync(d);
+  if (d.t === 'chat') addMsg('partner', d.text);
 }
 
 function sendChat() {
-  const inp = document.getElementById('chat-input');
+  const inp = document.getElementById('ci');
   const text = inp.value.trim();
-  if (!text) return;
-  if (!connected || !conn) { showToast('Not connected.'); return; }
-  conn.send({ t:'chat', text });
+  if (!text || !connected || !conn) return;
+  conn.send({t:'chat', text});
   addMsg('me', text);
   inp.value = '';
 }
 
-// ══════════════════════════════════════════
-// UI
-// ══════════════════════════════════════════
-function showLoading() {
-  document.getElementById('setup').style.display = 'none';
-  document.getElementById('loading').style.display = 'flex';
-}
-function loaderStep(t) { document.getElementById('loader-step').textContent = t; }
-function showWatch() {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('watch').style.display = 'flex';
-}
+// ═══════════════════════════════════════════════════
+//  UI
+// ═══════════════════════════════════════════════════
 function leaveRoom() { if(conn) conn.close(); location.reload(); }
 
 function copyLink() {
   if (!myId) return;
   const url = location.href.split('?')[0] + '?join=' + encodeURIComponent(myId);
   navigator.clipboard.writeText(url)
-    .then(() => showToast('Link copied — send it to her ♥'))
-    .catch(() => prompt('Copy this link:', url));
+    .then(() => showToast('Link skopiowany — wyślij jej ♥'))
+    .catch(() => prompt('Skopiuj ten link:', url));
 }
 
 function showOverlay(icon, title, msg) {
-  document.getElementById('overlay-icon').textContent  = icon;
-  document.getElementById('overlay-title').textContent = title;
-  document.getElementById('overlay-msg').textContent   = msg;
-  document.getElementById('overlay').style.display     = 'flex';
+  document.getElementById('oi').textContent = icon;
+  document.getElementById('ot').textContent = title;
+  document.getElementById('om').textContent = msg;
+  document.getElementById('ov').style.display = 'flex';
 }
-function dismissOverlay(e) {
-  if (e && e.target !== document.getElementById('overlay') && e.target !== document.getElementById('overlay-dismiss')) return;
-  document.getElementById('overlay').style.display = 'none';
+function dimOv(e) {
+  if (e && e.target !== document.getElementById('ov') && e.target !== document.getElementById('od')) return;
+  document.getElementById('ov').style.display = 'none';
 }
 
-function showHelp() { document.getElementById('help-modal').style.display = 'flex'; }
+function showHelp() { document.getElementById('hm').style.display = 'flex'; }
 function hideHelp(e) {
-  if (!e || !e.target.closest('#help-card')) document.getElementById('help-modal').style.display = 'none';
+  if (!e || !e.target.closest('#hc')) document.getElementById('hm').style.display = 'none';
+}
+
+function showBadge(text) {
+  const b = document.getElementById('badge');
+  b.textContent = text; b.classList.add('show');
+  setTimeout(() => b.classList.remove('show'), 5000);
 }
 
 function addMsg(who, text) {
-  const box = document.getElementById('messages');
+  const box = document.getElementById('msgs');
   const d = document.createElement('div');
   d.className = 'msg ' + who;
-  if (who !== 'system') {
+  if (who !== 'sys') {
     const lbl = document.createElement('div');
     lbl.className = 'who';
-    lbl.textContent = who === 'me' ? 'You' : 'Partner';
+    lbl.textContent = who === 'me' ? 'Ty' : 'Ona';
     d.appendChild(lbl);
   }
   const t = document.createElement('div');
@@ -627,7 +537,7 @@ function addMsg(who, text) {
   box.appendChild(d);
   box.scrollTop = box.scrollHeight;
 }
-function sysMsg(t) { addMsg('system', t); }
+function sysMsg(t) { addMsg('sys', t); }
 
 let toastT;
 function showToast(msg) {
@@ -639,8 +549,7 @@ function showToast(msg) {
 }
 function fmtTime(s) {
   if (s == null) return '?';
-  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2,'0')}`;
+  return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
 }
 
 // BOOT
