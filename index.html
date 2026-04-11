@@ -22,7 +22,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:var(--bg);
   background-image:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(201,168,76,.09) 0%,transparent 70%);
-  overflow-y:auto;padding:2rem 1rem;gap:.1rem;
+  overflow-y:auto;padding:2rem 1rem;
 }
 .logo{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,6vw,3.8rem);font-weight:300;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:.25rem}
 .logo-sub{font-size:.7rem;letter-spacing:.35em;color:var(--muted);text-transform:uppercase;margin-bottom:2.5rem}
@@ -42,46 +42,63 @@ input[type=text]{width:100%;padding:.68rem .9rem;background:#0d0d0d;border:1px s
 input[type=text]:focus{border-color:var(--gold-dim)}
 input[type=text]::placeholder{color:var(--muted)}
 .hint{font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:.7rem}
-.err{font-size:.72rem;color:var(--red);margin-top:.5rem;display:none;line-height:1.5}
-.ghost{display:inline-flex;align-items:center;gap:.35rem;background:none;border:none;color:var(--muted);font-size:.7rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;padding:.35rem 0;font-family:'DM Sans',sans-serif;transition:color .2s;margin-top:.5rem}
+.errmsg{font-size:.72rem;color:var(--red);margin-top:.5rem;display:none;line-height:1.5}
+.ghost{display:inline-flex;align-items:center;gap:.35rem;background:none;border:none;color:var(--muted);font-size:.7rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;padding:.35rem 0;font-family:'DM Sans',sans-serif;transition:color .2s;margin-top:.6rem}
 .ghost:hover{color:var(--gold)}
 
-/* ── WATCH SCREEN ── */
+/* ── WATCH ── */
 #watch{display:none;position:fixed;inset:0;flex-direction:row}
 #va{flex:1;display:flex;flex-direction:column;min-width:0}
 #vw{flex:1;position:relative;background:#000;overflow:hidden}
 
-/* The iframe sits normally — sandbox blocks redirects */
-#vf{
-  position:absolute;inset:0;width:100%;height:100%;border:none;
-  /* sandbox: allow scripts + same-origin for player to work,
-     but NO allow-popups and NO allow-top-navigation → ads can't open new tabs or redirect */
-  sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-pointer-lock"
-}
+/* iframe — NO sandbox attribute.
+   VidFast actively detects sandbox and shows "please disable sandbox".
+   We protect against redirects using overlay divs instead. */
+#vf{position:absolute;inset:0;width:100%;height:100%;border:none}
 
-/* Thin transparent shield over the very top edge where most
-   "open new tab" ad overlays live. Pointer-events none elsewhere
-   so normal video clicks still work. */
-#ad-shield{
-  position:absolute;top:0;left:0;right:0;height:52px;
-  z-index:10;pointer-events:none;
-  /* becomes active (blocks clicks) only on the top strip */
+/*
+  REDIRECT PROTECTION without sandbox:
+
+  Strategy: Two transparent overlay divs.
+
+  1) #shield-top — permanent, covers the top 56px.
+     This is where ad networks inject invisible clickable overlays (banner zone).
+     pointer-events:auto → we catch clicks here and do nothing (no navigation).
+
+  2) #shield-first — covers the entire iframe on first load.
+     The very first click on a video embed page is almost always hijacked by an
+     ad script waiting for user interaction. We eat that click, then retire the shield.
+     After that the player controls at the bottom are fully accessible.
+*/
+#shield-top{
+  position:absolute;top:0;left:0;right:0;height:56px;
+  z-index:10;cursor:default;
 }
+#shield-first{
+  position:absolute;inset:0;
+  z-index:9;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+#shield-first::after{
+  content:'▶  Kliknij aby uruchomić';
+  font-family:'DM Sans',sans-serif;
+  font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(201,168,76,.55);
+  pointer-events:none;
+}
+#shield-first.gone{display:none}
 
 .badge{
-  position:absolute;bottom:72px;left:12px;z-index:8;
+  position:absolute;bottom:68px;left:10px;z-index:8;
   font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;
   padding:.2rem .5rem;border-radius:2px;pointer-events:none;
-  background:rgba(201,168,76,.1);color:var(--gold-dim);border:1px solid rgba(201,168,76,.18);
+  background:rgba(8,8,8,.7);color:var(--muted);border:1px solid var(--border);
   opacity:0;transition:opacity .5s;
 }
 .badge.show{opacity:1}
 
 /* ── SYNCBAR ── */
-#syncbar{
-  height:52px;display:flex;align-items:center;gap:.6rem;
-  padding:0 .9rem;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0
-}
+#syncbar{height:52px;display:flex;align-items:center;gap:.6rem;padding:0 .9rem;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
 .pstat{display:flex;align-items:center;gap:.4rem;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .pdot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .4s}
 .pdot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
@@ -135,7 +152,7 @@ input[type=text]::placeholder{color:var(--muted)}
 .ibox p{font-size:.75rem;color:#7fb3d3;line-height:1.6}
 
 /* ── TOAST ── */
-#toast{position:fixed;bottom:66px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:.45rem 1rem;font-size:.7rem;letter-spacing:.05em;color:var(--muted);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;white-space:nowrap;z-index:400}
+#toast{position:fixed;bottom:62px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:.45rem 1rem;font-size:.7rem;letter-spacing:.05em;color:var(--muted);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;white-space:nowrap;z-index:400}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ── PING ── */
@@ -143,12 +160,12 @@ input[type=text]::placeholder{color:var(--muted)}
 .pinging{position:relative}
 .pinging::after{content:'';position:absolute;inset:0;border-radius:2px;border:1px solid var(--gold);animation:ping .5s ease forwards;pointer-events:none}
 
-/* ── MOBILE / TABLET ── */
+/* ── MOBILE / TABLET — no chat ── */
 @media(max-width:768px){
-  #sidebar{display:none !important}
-  #syncbar{gap:.4rem;padding:0 .6rem}
-  .sbtn{padding:.38rem .6rem;font-size:.68rem}
+  #sidebar{display:none!important}
   .pstat{display:none}
+  #syncbar{gap:.4rem;padding:0 .6rem}
+  .sbtn{padding:.38rem .65rem;font-size:.68rem}
 }
 </style>
 </head>
@@ -165,7 +182,7 @@ input[type=text]::placeholder{color:var(--muted)}
       <span class="dot" id="hdot"></span>
       <code id="rc">Connecting to relay…</code>
     </div>
-    <div class="err" id="perr"></div>
+    <div class="errmsg" id="perr"></div>
     <button class="btn" id="clb" disabled onclick="copyLink()">Copy invite link</button>
     <div class="hint">Share this link — she opens it and auto-joins.</div>
   </div>
@@ -184,17 +201,22 @@ input[type=text]::placeholder{color:var(--muted)}
   <div id="va">
     <div id="vw">
       <!--
-        sandbox WITHOUT allow-popups and allow-top-navigation
-        → the iframe JS cannot open new tabs, cannot redirect the parent page
-        → ads that try window.open() or location.href = '...' are silently blocked
-        → the video player itself still works fine
+        NO sandbox attribute — VidFast checks for it and shows "please disable sandbox".
+        Redirect protection is handled by the overlay divs below instead.
       -->
       <iframe id="vf"
         src="about:blank"
-        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+        allowfullscreen
         referrerpolicy="no-referrer"
-        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-pointer-lock"
       ></iframe>
+
+      <!-- Shield 1: permanent — blocks the top banner-ad strip -->
+      <div id="shield-top"></div>
+
+      <!-- Shield 2: first-click absorber — catches the ad hijack on initial interaction,
+           then disappears so the player controls are accessible -->
+      <div id="shield-first" onclick="firstClick()"></div>
+
       <div class="badge" id="badge"></div>
     </div>
 
@@ -203,9 +225,9 @@ input[type=text]::placeholder{color:var(--muted)}
         <span class="pdot" id="pdot"></span>
         <span id="plbl">Waiting…</span>
       </div>
-      <button class="sbtn" id="bp" onclick="doSync('pause')">⏸ Pause</button>
+      <button class="sbtn" id="bp"  onclick="doSync('pause')">⏸ Pause</button>
       <button class="sbtn" id="bpl" onclick="doSync('play')">▶ Play</button>
-      <button class="sbtn" id="bs" onclick="doSync('seek')" title="Send current time to partner">⟳ Sync time</button>
+      <button class="sbtn" id="bs"  onclick="doSync('seek')">⟳ Sync time</button>
       <div class="sep"></div>
       <button class="sbtn" onclick="leaveRoom()" style="color:var(--muted);font-size:.66rem">✕ Leave</button>
     </div>
@@ -240,19 +262,19 @@ input[type=text]::placeholder{color:var(--muted)}
   <div id="hc">
     <h2>Deploy on GitHub Pages — Free</h2>
     <div class="ibox">
-      <p>⚠ <strong>HTTPS is required.</strong> PeerJS WebRTC won't work on <code>file://</code> — it only works when served over HTTP(S). GitHub Pages gives you a free HTTPS URL in ~60 seconds.</p>
+      <p>⚠ <strong>HTTPS required.</strong> PeerJS WebRTC won't work on <code>file://</code>. GitHub Pages gives you a free HTTPS URL in ~60 seconds.</p>
     </div>
     <div class="st"><div class="sn">1</div><div class="sb"><strong>Create a GitHub account</strong><p>Go to <code>github.com</code> → Sign up (free).</p></div></div>
     <div class="st"><div class="sn">2</div><div class="sb"><strong>New public repository</strong><p>Click <code>+</code> → <code>New repository</code>. Name it e.g. <code>cinemasync</code>. Set to <strong>Public</strong>. Click <code>Create repository</code>.</p></div></div>
-    <div class="st"><div class="sn">3</div><div class="sb"><strong>Upload file as index.html</strong><p>On the repo page click <code>uploading an existing file</code>. Drag the file in. <strong>Rename it to <code>index.html</code></strong>. Click <code>Commit changes</code>.</p></div></div>
-    <div class="st"><div class="sn">4</div><div class="sb"><strong>Enable GitHub Pages</strong><p>Go to <code>Settings → Pages</code>. Under <em>Branch</em> select <code>main</code> and <code>/ (root)</code>, click <code>Save</code>.</p></div></div>
-    <div class="st"><div class="sn">5</div><div class="sb"><strong>Done — share your URL</strong><p>Your app is live at <code>https://YOUR-USERNAME.github.io/cinemasync/</code>. Open it, copy the invite link, send to her. ♥</p></div></div>
+    <div class="st"><div class="sn">3</div><div class="sb"><strong>Upload as index.html</strong><p>On repo page click <code>uploading an existing file</code>. Drag the file in. <strong>Rename to <code>index.html</code></strong>. Commit changes.</p></div></div>
+    <div class="st"><div class="sn">4</div><div class="sb"><strong>Enable GitHub Pages</strong><p><code>Settings → Pages</code>. Branch: <code>main</code>, folder <code>/ (root)</code>. Save.</p></div></div>
+    <div class="st"><div class="sn">5</div><div class="sb"><strong>Done ♥</strong><p>Live at <code>https://YOUR-USERNAME.github.io/cinemasync/</code>. Open, copy invite link, send her.</p></div></div>
     <hr class="dh"/>
     <div class="st">
       <div class="sn" style="background:rgba(201,168,76,.1);border-color:var(--gold-dim);color:var(--gold)">★</div>
       <div class="sb">
-        <strong>How sync works</strong>
-        <p>The app sends <strong>postMessage</strong> commands directly to the VidFast player (pause/play/seek). Both players receive the same command at the same time via PeerJS P2P. Clicking on the video no longer redirects anywhere — the iframe runs in a <strong>sandbox</strong> that blocks popups and page navigations from ad scripts.</p>
+        <strong>Jak działa sync</strong>
+        <p>Przyciski ⏸/▶/⟳ wysyłają <strong>postMessage</strong> do playera VidFast (obsługuje API) i jednocześnie przez PeerJS P2P do partnerki. Brak sandbox — zamiast tego dwie przezroczyste nakładki blokują pierwszy klik i górny pasek reklamowy, gdzie zazwyczaj siedzą overlay'e przekierowujące.</p>
       </div>
     </div>
     <button class="btn fill" style="margin-top:1.3rem" onclick="hideHelp()">Got it</button>
@@ -262,48 +284,49 @@ input[type=text]::placeholder{color:var(--muted)}
 <div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  CONFIG
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 const VIDEO_SRC = 'https://vidfast.pro/movie/687163?autoPlay=true';
 
-// postMessage commands to try — VidFast uses a videojs-based player.
-// We broadcast all known formats so at least one lands.
-function msgPause() { return [
-  'pause',
-  JSON.stringify({event:'command',func:'pause',args:[]}),
-  JSON.stringify({action:'pause'}),
-  JSON.stringify({type:'pause'}),
-  JSON.stringify({method:'pause'}),
-]; }
-function msgPlay() { return [
-  'play',
-  JSON.stringify({event:'command',func:'play',args:[]}),
-  JSON.stringify({action:'play'}),
-  JSON.stringify({type:'play'}),
-  JSON.stringify({method:'play'}),
-]; }
-function msgSeek(t) { return [
-  JSON.stringify({event:'command',func:'seekTo',args:[t,true]}),
-  JSON.stringify({action:'seek',time:t}),
-  JSON.stringify({type:'seek',time:t}),
-  JSON.stringify({method:'seek',time:t}),
-  JSON.stringify({currentTime:t}),
-]; }
+// VidFast uses videojs internally. We try multiple postMessage formats
+// so at least one command lands regardless of player version.
+const PM = {
+  pause: [
+    'pause',
+    JSON.stringify({event:'command', func:'pause', args:[]}),
+    JSON.stringify({action:'pause'}),
+    JSON.stringify({type:'pause'}),
+    JSON.stringify({method:'pause'}),
+  ],
+  play: [
+    'play',
+    JSON.stringify({event:'command', func:'play', args:[]}),
+    JSON.stringify({action:'play'}),
+    JSON.stringify({type:'play'}),
+    JSON.stringify({method:'play'}),
+  ],
+  seek(t) { return [
+    JSON.stringify({event:'command', func:'seekTo', args:[t, true]}),
+    JSON.stringify({action:'seek', time:t}),
+    JSON.stringify({type:'seek', time:t}),
+    JSON.stringify({currentTime:t}),
+  ]; },
+};
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 let peer, conn, myId;
 let connected = false;
 let syncLock  = false;
-let currentTs = 0; // track time from player events
+let currentTs = 0;
 
 const iframe = document.getElementById('vf');
 
-// ═══════════════════════════════════════════════════
-//  PEERJS
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+//  PEERJS — use default cloud, no hardcoded host
+// ═══════════════════════════════════════════════
 function initPeer() {
   peer = new Peer(undefined, {
     config: { iceServers: [
@@ -334,9 +357,9 @@ function initPeer() {
     document.getElementById('hdot').classList.remove('ok');
     document.getElementById('hdot').classList.add('err');
     if (location.protocol === 'file:') {
-      el.innerHTML = '⚠ You opened this as <code>file://</code> — PeerJS needs HTTPS.<br>Deploy to GitHub Pages (see guide below).';
+      el.innerHTML = '⚠ Plik otwarty jako <code>file://</code> — PeerJS wymaga HTTPS.<br>Wrzuć na GitHub Pages (patrz poradnik poniżej).';
     } else if (err.type === 'network' || err.type === 'server-error') {
-      el.textContent = '⚠ Cannot reach relay. Retrying in 5 s…';
+      el.textContent = '⚠ Brak połączenia z serwerem relay. Ponawianie za 5 s…';
       setTimeout(reinitPeer, 5000);
     } else if (err.type === 'unavailable-id') {
       reinitPeer();
@@ -353,16 +376,16 @@ function reinitPeer() {
   initPeer();
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  CONNECT
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function joinRoom(id) {
   const target = id || document.getElementById('ji').value.trim();
   if (!target) return;
-  if (!myId) { showToast('Still connecting to relay…'); return; }
+  if (!myId) { showToast('Jeszcze się łączy z relay…'); return; }
   const c = peer.connect(target, { reliable: true, serialization: 'json' });
   c.on('open', () => setupConn(c));
-  c.on('error', e => showToast('Could not connect: ' + (e.message || e)));
+  c.on('error', e => showToast('Nie udało się połączyć: ' + (e.message || e)));
 }
 
 function setupConn(c) {
@@ -375,17 +398,13 @@ function setupConn(c) {
 
 function onConnected() {
   connected = true;
-
-  // Show watch screen & load iframe
   document.getElementById('setup').style.display = 'none';
   document.getElementById('watch').style.display = 'flex';
   loadIframe();
-
   document.getElementById('pdot').classList.add('on');
-  document.getElementById('plbl').textContent = 'Partner connected';
+  document.getElementById('plbl').textContent = 'Partnerka połączona';
   document.getElementById('rp').textContent = myId ? myId.slice(0,8)+'…' : '—';
-  sysMsg('🟢 Connected · Kliknij ▶ Play lub ⏸ Pause — obie strony zsynchronizują się.');
-  showBadge('Sandbox mode — redirecty zablokowane');
+  sysMsg('🟢 Połączono. Użyj ▶ / ⏸ / ⟳ żeby synchronizować odtwarzanie.');
 }
 
 function handleDisconnect() {
@@ -396,81 +415,80 @@ function handleDisconnect() {
   sysMsg('🔴 Partnerka rozłączona.');
 }
 
-// ═══════════════════════════════════════════════════
-//  IFRAME
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+//  IFRAME & SHIELD
+// ═══════════════════════════════════════════════
 function loadIframe() {
   iframe.src = VIDEO_SRC;
 
-  // Listen for any postMessages coming OUT of the iframe
-  // (some players emit timeupdate, play, pause events)
+  // Listen for postMessages from the player (timeupdate, play, pause events)
   window.addEventListener('message', e => {
     if (!e.data) return;
     let d = e.data;
-    if (typeof d === 'string') {
-      try { d = JSON.parse(d); } catch(_) { return; }
-    }
-    // Extract current time if player emits it
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch(_) { return; } }
+    // Track playback time
     const t = d.currentTime ?? d.time ?? d.position ?? d.seconds;
-    if (typeof t === 'number') currentTs = t;
-
-    // If player emits pause/play events, forward to partner
+    if (typeof t === 'number' && t > 0) currentTs = t;
+    // Forward player-native pause/play to partner
     if (syncLock) return;
-    const ev = (d.event || d.type || d.action || '').toLowerCase();
-    if (ev === 'pause') broadcast({t:'sync',a:'pause',ts:currentTs});
-    if (ev === 'play')  broadcast({t:'sync',a:'play', ts:currentTs});
+    const ev = String(d.event || d.type || d.action || '').toLowerCase();
+    if (ev === 'pause') broadcast({t:'sync', a:'pause', ts:currentTs});
+    if (ev === 'play')  broadcast({t:'sync', a:'play',  ts:currentTs});
   });
+
+  showBadge('Kliknij ▶ lub pauzę aby zsynchronizować');
 }
 
-// Send commands to the iframe player
-function playerCmd(msgs) {
+// First click: eat the initial ad hijack, then retire shield
+function firstClick() {
+  document.getElementById('shield-first').classList.add('gone');
+  // Send a play signal into the player via postMessage in case it was waiting
+  setTimeout(() => playerSend(PM.play), 300);
+}
+
+function playerSend(msgs) {
   for (const m of msgs) {
     try { iframe.contentWindow.postMessage(m, '*'); } catch(_) {}
   }
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  SYNC
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function doSync(action) {
   if (!connected || !conn) { showToast('Brak połączenia z partnerką.'); return; }
 
-  // Send to local player immediately
   syncLock = true;
-  if (action === 'pause') playerCmd(msgPause());
-  if (action === 'play')  playerCmd(msgPlay());
-  if (action === 'seek')  playerCmd(msgSeek(currentTs));
+  if (action === 'pause') playerSend(PM.pause);
+  if (action === 'play')  playerSend(PM.play);
+  if (action === 'seek')  playerSend(PM.seek(currentTs));
   setTimeout(() => syncLock = false, 600);
 
-  // Send to partner
   broadcast({t:'sync', a:action, ts:currentTs});
 
-  const map = {pause:'bp', play:'bpl', seek:'bs'};
-  const btn = document.getElementById(map[action]);
+  const ids = {pause:'bp', play:'bpl', seek:'bs'};
+  const btn = document.getElementById(ids[action]);
   if (btn) { btn.classList.add('pinging'); setTimeout(()=>btn.classList.remove('pinging'),500); }
 
-  sysMsg({pause:'⏸ Pauza wysłana.', play:'▶ Play wysłany.', seek:'⟳ Czas zsynchronizowany.'}[action]);
+  sysMsg({pause:'⏸ Pauza wysłana.', play:'▶ Play wysłany.', seek:'⟳ Czas przesłany.'}[action]);
 }
 
 function applySync(d) {
   syncLock = true;
-  if (d.ts != null) {
-    currentTs = d.ts;
-    playerCmd(msgSeek(d.ts));
-  }
-  if (d.a === 'pause') playerCmd(msgPause());
-  if (d.a === 'play')  playerCmd(msgPlay());
+  if (d.ts != null) { currentTs = d.ts; playerSend(PM.seek(d.ts)); }
+  if (d.a === 'pause') playerSend(PM.pause);
+  if (d.a === 'play')  playerSend(PM.play);
   setTimeout(() => syncLock = false, 600);
-  sysMsg(`⟳ ${d.a === 'pause' ? '⏸ Partnerka pauzuje' : d.a === 'play' ? '▶ Partnerka odtwarza' : '⟳ Czas: '+fmtTime(d.ts)}`);
+  sysMsg(d.a === 'pause' ? '⏸ Partnerka pauzuje.' : d.a === 'play' ? '▶ Partnerka odtwarza.' : '⟳ Zsynchronizowano do '+fmtTime(d.ts));
 }
 
 function broadcast(data) {
   if (connected && conn) try { conn.send(data); } catch(_) {}
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  DATA
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function handleData(d) {
   if (!d) return;
   if (d.t === 'sync') applySync(d);
@@ -486,9 +504,9 @@ function sendChat() {
   inp.value = '';
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  UI
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function leaveRoom() { if(conn) conn.close(); location.reload(); }
 
 function copyLink() {
@@ -496,15 +514,9 @@ function copyLink() {
   const url = location.href.split('?')[0] + '?join=' + encodeURIComponent(myId);
   navigator.clipboard.writeText(url)
     .then(() => showToast('Link skopiowany — wyślij jej ♥'))
-    .catch(() => prompt('Skopiuj ten link:', url));
+    .catch(() => prompt('Skopiuj link:', url));
 }
 
-function showOverlay(icon, title, msg) {
-  document.getElementById('oi').textContent = icon;
-  document.getElementById('ot').textContent = title;
-  document.getElementById('om').textContent = msg;
-  document.getElementById('ov').style.display = 'flex';
-}
 function dimOv(e) {
   if (e && e.target !== document.getElementById('ov') && e.target !== document.getElementById('od')) return;
   document.getElementById('ov').style.display = 'none';
@@ -531,9 +543,9 @@ function addMsg(who, text) {
     lbl.textContent = who === 'me' ? 'Ty' : 'Ona';
     d.appendChild(lbl);
   }
-  const t = document.createElement('div');
-  t.textContent = text;
-  d.appendChild(t);
+  const sp = document.createElement('div');
+  sp.textContent = text;
+  d.appendChild(sp);
   box.appendChild(d);
   box.scrollTop = box.scrollHeight;
 }
@@ -552,7 +564,6 @@ function fmtTime(s) {
   return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
 }
 
-// BOOT
 initPeer();
 </script>
 </body>
