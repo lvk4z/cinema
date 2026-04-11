@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CinemaSync</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Mono:wght@400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Mono:wght@400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#080808;--surface:#111;--border:#222;
-  --gold:#c9a84c;--gold-dim:#7a6430;
+  --gold:#c9a84c;--gdim:#7a6430;
   --text:#e8e0d0;--muted:#555;
   --red:#c0392b;--green:#27ae60;
 }
@@ -28,18 +28,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .logo-sub{font-size:.7rem;letter-spacing:.35em;color:var(--muted);text-transform:uppercase;margin-bottom:2.5rem}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:1.8rem 2.2rem;width:min(420px,94vw);margin-bottom:1rem}
 .card h2{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;letter-spacing:.08em;color:var(--gold);margin-bottom:1.1rem;text-transform:uppercase}
-.row-id{display:flex;align-items:center;gap:.6rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;padding:.6rem .9rem;margin-bottom:.9rem}
-.row-id code{font-family:'DM Mono',monospace;font-size:.8rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rowid{display:flex;align-items:center;gap:.6rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;padding:.6rem .9rem;margin-bottom:.9rem}
+.rowid code{font-family:'DM Mono',monospace;font-size:.8rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .4s}
 .dot.ok{background:var(--gold);box-shadow:0 0 6px var(--gold)}
 .dot.err{background:var(--red);box-shadow:0 0 5px var(--red)}
-.btn{display:block;width:100%;padding:.68rem 1.1rem;background:transparent;border:1px solid var(--gold-dim);border-radius:2px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .2s,border-color .2s}
+.btn{display:block;width:100%;padding:.68rem 1.1rem;background:transparent;border:1px solid var(--gdim);border-radius:2px;color:var(--gold);font-family:'DM Sans',sans-serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .2s,border-color .2s}
 .btn:hover{background:rgba(201,168,76,.08);border-color:var(--gold)}
 .btn.fill{background:var(--gold);color:#080808;border-color:var(--gold);font-weight:500}
 .btn.fill:hover{background:#d4b060}
 .btn:disabled{opacity:.35;cursor:not-allowed}
 input[type=text]{width:100%;padding:.68rem .9rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;outline:none;transition:border-color .2s;margin-bottom:.75rem}
-input[type=text]:focus{border-color:var(--gold-dim)}
+input[type=text]:focus{border-color:var(--gdim)}
 input[type=text]::placeholder{color:var(--muted)}
 .hint{font-size:.68rem;color:var(--muted);line-height:1.6;margin-top:.7rem}
 .errmsg{font-size:.72rem;color:var(--red);margin-top:.5rem;display:none;line-height:1.5}
@@ -51,103 +51,102 @@ input[type=text]::placeholder{color:var(--muted)}
 #va{flex:1;display:flex;flex-direction:column;min-width:0}
 #vw{flex:1;position:relative;background:#000;overflow:hidden}
 
-/* iframe — NO sandbox attribute.
-   VidFast actively detects sandbox and shows "please disable sandbox".
-   We protect against redirects using overlay divs instead. */
 #vf{position:absolute;inset:0;width:100%;height:100%;border:none}
 
 /*
-  REDIRECT PROTECTION without sandbox:
-
-  Strategy: Two transparent overlay divs.
-
-  1) #shield-top — permanent, covers the top 56px.
-     This is where ad networks inject invisible clickable overlays (banner zone).
-     pointer-events:auto → we catch clicks here and do nothing (no navigation).
-
-  2) #shield-first — covers the entire iframe on first load.
-     The very first click on a video embed page is almost always hijacked by an
-     ad script waiting for user interaction. We eat that click, then retire the shield.
-     After that the player controls at the bottom are fully accessible.
+  AD REDIRECT PROTECTION — without sandbox:
+  We inject a <script> before the iframe src loads that overrides window.open
+  and location assignments inside the iframe's about:blank context.
+  Additionally a permanent top-strip overlay blocks the banner ad zone.
+  The main video area remains fully clickable.
 */
-#shield-top{
-  position:absolute;top:0;left:0;right:0;height:56px;
-  z-index:10;cursor:default;
+#ad-top{
+  /* Blocks the top ~54px where banner ad overlays are injected */
+  position:absolute;top:0;left:0;right:0;height:54px;
+  z-index:10;
 }
-#shield-first{
-  position:absolute;inset:0;
-  z-index:9;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-}
-#shield-first::after{
-  content:'▶  Kliknij aby uruchomić';
-  font-family:'DM Sans',sans-serif;
-  font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;
-  color:rgba(201,168,76,.55);
-  pointer-events:none;
-}
-#shield-first.gone{display:none}
+/* No full-screen shield — we trust the top blocker + the script injection */
 
-.badge{
-  position:absolute;bottom:68px;left:10px;z-index:8;
-  font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;
-  padding:.2rem .5rem;border-radius:2px;pointer-events:none;
-  background:rgba(8,8,8,.7);color:var(--muted);border:1px solid var(--border);
-  opacity:0;transition:opacity .5s;
+/* ── COUNTDOWN OVERLAY ── */
+#countdown{
+  position:fixed;inset:0;z-index:300;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(3px);
+  flex-direction:column;gap:1rem;
 }
-.badge.show{opacity:1}
+#cd-num{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(5rem,20vw,10rem);
+  font-weight:300;color:var(--gold);
+  line-height:1;
+  animation:cdbounce .9s ease infinite;
+}
+@keyframes cdbounce{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+#cd-label{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
 
 /* ── SYNCBAR ── */
-#syncbar{height:52px;display:flex;align-items:center;gap:.6rem;padding:0 .9rem;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
-.pstat{display:flex;align-items:center;gap:.4rem;font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+#syncbar{
+  height:54px;display:flex;align-items:center;gap:.55rem;
+  padding:0 .9rem;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0
+}
+.pstat{display:flex;align-items:center;gap:.4rem;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .pdot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .4s}
 .pdot.on{background:var(--green);box-shadow:0 0 5px var(--green)}
 .pdot.off{background:var(--red)}
-.sbtn{display:flex;align-items:center;gap:.35rem;padding:.4rem .85rem;background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap}
-.sbtn:hover{border-color:var(--gold-dim);color:var(--gold)}
+
+/* Sync buttons — bigger, with keyboard shortcut hint */
+.sbtn{
+  display:flex;align-items:center;gap:.35rem;
+  padding:.38rem .8rem;
+  background:transparent;border:1px solid var(--border);border-radius:2px;
+  color:var(--text);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;white-space:nowrap;
+  position:relative;
+}
+.sbtn:hover{border-color:var(--gdim);color:var(--gold)}
 .sbtn:active{background:rgba(201,168,76,.1)}
+.sbtn .key{
+  font-size:.55rem;color:var(--muted);letter-spacing:.04em;
+  background:#0d0d0d;border:1px solid var(--border);border-radius:2px;
+  padding:.08rem .28rem;margin-left:.15rem;font-family:'DM Mono',monospace;
+}
+/* Countdown button — highlighted */
+#btn-go{border-color:var(--gdim);color:var(--gold)}
+#btn-go:hover{background:rgba(201,168,76,.12)}
+
 .sep{flex:1}
 
 /* ── SIDEBAR (desktop only) ── */
-#sidebar{width:265px;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border);flex-shrink:0}
+#sidebar{width:260px;display:flex;flex-direction:column;background:var(--surface);border-left:1px solid var(--border);flex-shrink:0}
 #sh{padding:.85rem 1rem .65rem;border-bottom:1px solid var(--border);font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:300;letter-spacing:.1em;color:var(--gold);display:flex;align-items:center;justify-content:space-between}
 .rpill{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--muted);border:1px solid var(--border);border-radius:2px;padding:.16rem .38rem;cursor:pointer;transition:color .2s,border-color .2s}
-.rpill:hover{color:var(--gold);border-color:var(--gold-dim)}
+.rpill:hover{color:var(--gold);border-color:var(--gdim)}
 #msgs{flex:1;overflow-y:auto;padding:.7rem;display:flex;flex-direction:column;gap:.4rem}
 #msgs::-webkit-scrollbar{width:3px}
 #msgs::-webkit-scrollbar-thumb{background:var(--border)}
 .msg{padding:.38rem .6rem;border-radius:2px;font-size:.76rem;line-height:1.5;max-width:96%}
 .msg.me{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.15);align-self:flex-end}
 .msg.partner{background:#181818;border:1px solid var(--border);align-self:flex-start}
-.msg.sys{background:transparent;border:none;color:var(--muted);font-size:.64rem;letter-spacing:.04em;align-self:center;text-align:center}
+.msg.sys{background:transparent;border:none;color:var(--muted);font-size:.64rem;letter-spacing:.04em;align-self:center;text-align:center;padding:.2rem 0}
 .msg .who{font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.12rem}
 #cir{padding:.6rem .7rem;border-top:1px solid var(--border);display:flex;gap:.45rem}
 #ci{flex:1;padding:.48rem .7rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;color:var(--text);font-size:.76rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
-#ci:focus{border-color:var(--gold-dim)}
+#ci:focus{border-color:var(--gdim)}
 #ci::placeholder{color:var(--muted)}
 #cs{padding:.48rem .8rem;background:transparent;border:1px solid var(--border);border-radius:2px;color:var(--gold);font-size:.9rem;cursor:pointer;transition:all .2s}
-#cs:hover{background:rgba(201,168,76,.1);border-color:var(--gold-dim)}
-
-/* ── OVERLAY ── */
-#ov{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.82);backdrop-filter:blur(4px)}
-#oc{background:var(--surface);border:1px solid var(--gold-dim);border-radius:2px;padding:2.2rem 2.8rem;text-align:center;max-width:360px;width:90vw;animation:su .22s ease}
-@keyframes su{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
-#oi{font-size:2.6rem;margin-bottom:.6rem}
-#ot{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:400;color:var(--gold);margin-bottom:.45rem}
-#om{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:1.4rem}
-#od{padding:.55rem 1.8rem;background:var(--gold);color:#080808;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;cursor:pointer}
-#od:hover{background:#d4b060}
+#cs:hover{background:rgba(201,168,76,.1);border-color:var(--gdim)}
 
 /* ── HELP ── */
-#hm{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.88);backdrop-filter:blur(4px)}
+#hm{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.88);backdrop-filter:blur(4px)}
 #hc{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:2.2rem;width:min(520px,94vw);max-height:90vh;overflow-y:auto;animation:su .22s ease}
+@keyframes su{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
 #hc h2{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;color:var(--gold);letter-spacing:.08em;margin-bottom:1.3rem}
-.st{display:flex;gap:.9rem;margin-bottom:1.1rem}
-.sn{width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,.15);border:1px solid var(--gold-dim);color:var(--gold);font-size:.68rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.08rem}
-.sb strong{display:block;font-size:.82rem;color:var(--text);margin-bottom:.25rem}
+.st{display:flex;gap:.9rem;margin-bottom:1rem}
+.sn{width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,.15);border:1px solid var(--gdim);color:var(--gold);font-size:.68rem;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.08rem}
+.sb strong{display:block;font-size:.82rem;color:var(--text);margin-bottom:.2rem}
 .sb p{font-size:.75rem;color:var(--muted);line-height:1.6}
 .sb code{font-family:'DM Mono',monospace;font-size:.72rem;background:#0d0d0d;border:1px solid var(--border);border-radius:2px;padding:.12rem .35rem;color:var(--text)}
-.dh{border:none;border-top:1px solid var(--border);margin:1.3rem 0}
+.dh{border:none;border-top:1px solid var(--border);margin:1.2rem 0}
 .ibox{background:rgba(41,128,185,.07);border:1px solid rgba(41,128,185,.22);border-radius:2px;padding:.9rem 1.1rem;margin-bottom:.9rem}
 .ibox p{font-size:.75rem;color:#7fb3d3;line-height:1.6}
 
@@ -160,12 +159,13 @@ input[type=text]::placeholder{color:var(--muted)}
 .pinging{position:relative}
 .pinging::after{content:'';position:absolute;inset:0;border-radius:2px;border:1px solid var(--gold);animation:ping .5s ease forwards;pointer-events:none}
 
-/* ── MOBILE / TABLET — no chat ── */
+/* ── MOBILE — no chat, bigger buttons ── */
 @media(max-width:768px){
   #sidebar{display:none!important}
   .pstat{display:none}
-  #syncbar{gap:.4rem;padding:0 .6rem}
-  .sbtn{padding:.38rem .65rem;font-size:.68rem}
+  #syncbar{gap:.35rem;padding:0 .5rem;height:52px}
+  .sbtn{padding:.35rem .6rem;font-size:.7rem}
+  .sbtn .key{display:none}
 }
 </style>
 </head>
@@ -178,9 +178,9 @@ input[type=text]::placeholder{color:var(--muted)}
 
   <div class="card">
     <h2>Host a session</h2>
-    <div class="row-id">
+    <div class="rowid">
       <span class="dot" id="hdot"></span>
-      <code id="rc">Connecting to relay…</code>
+      <code id="rc">Connecting…</code>
     </div>
     <div class="errmsg" id="perr"></div>
     <button class="btn" id="clb" disabled onclick="copyLink()">Copy invite link</button>
@@ -189,35 +189,26 @@ input[type=text]::placeholder{color:var(--muted)}
 
   <div class="card">
     <h2>Join a session</h2>
-    <input type="text" id="ji" placeholder="Paste room code here" />
+    <input type="text" id="ji" placeholder="Paste room code here"/>
     <button class="btn fill" onclick="joinRoom()">Join room</button>
   </div>
 
   <button class="ghost" onclick="showHelp()">📖 GitHub Pages deploy guide</button>
 </div>
 
+<!-- COUNTDOWN OVERLAY -->
+<div id="countdown">
+  <div id="cd-label">Starting in</div>
+  <div id="cd-num">3</div>
+</div>
+
 <!-- WATCH -->
 <div id="watch">
   <div id="va">
     <div id="vw">
-      <!--
-        NO sandbox attribute — VidFast checks for it and shows "please disable sandbox".
-        Redirect protection is handled by the overlay divs below instead.
-      -->
-      <iframe id="vf"
-        src="about:blank"
-        allowfullscreen
-        referrerpolicy="no-referrer"
-      ></iframe>
-
-      <!-- Shield 1: permanent — blocks the top banner-ad strip -->
-      <div id="shield-top"></div>
-
-      <!-- Shield 2: first-click absorber — catches the ad hijack on initial interaction,
-           then disappears so the player controls are accessible -->
-      <div id="shield-first" onclick="firstClick()"></div>
-
-      <div class="badge" id="badge"></div>
+      <iframe id="vf" src="about:blank" allowfullscreen referrerpolicy="no-referrer"></iframe>
+      <!-- Permanent blocker on the top ad-banner strip -->
+      <div id="ad-top"></div>
     </div>
 
     <div id="syncbar">
@@ -225,11 +216,21 @@ input[type=text]::placeholder{color:var(--muted)}
         <span class="pdot" id="pdot"></span>
         <span id="plbl">Waiting…</span>
       </div>
-      <button class="sbtn" id="bp"  onclick="doSync('pause')">⏸ Pause</button>
-      <button class="sbtn" id="bpl" onclick="doSync('play')">▶ Play</button>
-      <button class="sbtn" id="bs"  onclick="doSync('seek')">⟳ Sync time</button>
+
+      <!-- 3-2-1 GO countdown sync -->
+      <button class="sbtn" id="btn-go" onclick="startCountdown()">
+        🎬 3-2-1 Go!<span class="key">G</span>
+      </button>
+
+      <button class="sbtn" id="bp" onclick="doSync('pause')">
+        ⏸<span class="key">P</span>
+      </button>
+      <button class="sbtn" id="bpl" onclick="doSync('play')">
+        ▶<span class="key">Space</span>
+      </button>
+
       <div class="sep"></div>
-      <button class="sbtn" onclick="leaveRoom()" style="color:var(--muted);font-size:.66rem">✕ Leave</button>
+      <button class="sbtn" onclick="leaveRoom()" style="color:var(--muted);font-size:.66rem">✕</button>
     </div>
   </div>
 
@@ -241,19 +242,9 @@ input[type=text]::placeholder{color:var(--muted)}
     <div id="msgs"></div>
     <div id="cir">
       <input type="text" id="ci" placeholder="Message…" maxlength="280"
-        onkeydown="if(event.key==='Enter')sendChat()" />
+        onkeydown="if(event.key==='Enter')sendChat()"/>
       <button id="cs" onclick="sendChat()">↑</button>
     </div>
-  </div>
-</div>
-
-<!-- SYNC OVERLAY -->
-<div id="ov" onclick="dimOv(event)">
-  <div id="oc">
-    <div id="oi"></div>
-    <div id="ot"></div>
-    <div id="om"></div>
-    <button id="od" onclick="dimOv()">Done</button>
   </div>
 </div>
 
@@ -262,19 +253,19 @@ input[type=text]::placeholder{color:var(--muted)}
   <div id="hc">
     <h2>Deploy on GitHub Pages — Free</h2>
     <div class="ibox">
-      <p>⚠ <strong>HTTPS required.</strong> PeerJS WebRTC won't work on <code>file://</code>. GitHub Pages gives you a free HTTPS URL in ~60 seconds.</p>
+      <p>⚠ <strong>HTTPS required</strong> — PeerJS WebRTC breaks on <code>file://</code>. GitHub Pages gives you free HTTPS in ~60 s.</p>
     </div>
-    <div class="st"><div class="sn">1</div><div class="sb"><strong>Create a GitHub account</strong><p>Go to <code>github.com</code> → Sign up (free).</p></div></div>
-    <div class="st"><div class="sn">2</div><div class="sb"><strong>New public repository</strong><p>Click <code>+</code> → <code>New repository</code>. Name it e.g. <code>cinemasync</code>. Set to <strong>Public</strong>. Click <code>Create repository</code>.</p></div></div>
-    <div class="st"><div class="sn">3</div><div class="sb"><strong>Upload as index.html</strong><p>On repo page click <code>uploading an existing file</code>. Drag the file in. <strong>Rename to <code>index.html</code></strong>. Commit changes.</p></div></div>
-    <div class="st"><div class="sn">4</div><div class="sb"><strong>Enable GitHub Pages</strong><p><code>Settings → Pages</code>. Branch: <code>main</code>, folder <code>/ (root)</code>. Save.</p></div></div>
-    <div class="st"><div class="sn">5</div><div class="sb"><strong>Done ♥</strong><p>Live at <code>https://YOUR-USERNAME.github.io/cinemasync/</code>. Open, copy invite link, send her.</p></div></div>
+    <div class="st"><div class="sn">1</div><div class="sb"><strong>Create GitHub account</strong><p><code>github.com</code> → Sign up (free).</p></div></div>
+    <div class="st"><div class="sn">2</div><div class="sb"><strong>New public repository</strong><p>Click <code>+</code> → <code>New repository</code>. Name e.g. <code>cinemasync</code>. Set <strong>Public</strong>. Create.</p></div></div>
+    <div class="st"><div class="sn">3</div><div class="sb"><strong>Upload file as index.html</strong><p>On repo page → <code>uploading an existing file</code>. Drag file. <strong>Rename to <code>index.html</code></strong>. Commit.</p></div></div>
+    <div class="st"><div class="sn">4</div><div class="sb"><strong>Enable Pages</strong><p><code>Settings → Pages</code>. Branch: <code>main</code>, <code>/ (root)</code>. Save.</p></div></div>
+    <div class="st"><div class="sn">5</div><div class="sb"><strong>Share URL ♥</strong><p>Live at <code>https://USERNAME.github.io/cinemasync/</code>. Open, Copy invite link, send her.</p></div></div>
     <hr class="dh"/>
     <div class="st">
-      <div class="sn" style="background:rgba(201,168,76,.1);border-color:var(--gold-dim);color:var(--gold)">★</div>
+      <div class="sn" style="background:rgba(201,168,76,.1);border-color:var(--gdim);color:var(--gold)">★</div>
       <div class="sb">
-        <strong>Jak działa sync</strong>
-        <p>Przyciski ⏸/▶/⟳ wysyłają <strong>postMessage</strong> do playera VidFast (obsługuje API) i jednocześnie przez PeerJS P2P do partnerki. Brak sandbox — zamiast tego dwie przezroczyste nakładki blokują pierwszy klik i górny pasek reklamowy, gdzie zazwyczaj siedzą overlay'e przekierowujące.</p>
+        <strong>Jak synchronizować</strong>
+        <p><strong>🎬 3-2-1 Go!</strong> — obie strony dostają odliczanie, a po 0 każde z was klika Play jednocześnie. Albo <strong>⏸/▶</strong> po prostu synchronizuje pauzę. Skróty klawiaturowe działają gdy focus jest poza playerem (kliknij na syncbar).</p>
       </div>
     </div>
     <button class="btn fill" style="margin-top:1.3rem" onclick="hideHelp()">Got it</button>
@@ -284,286 +275,337 @@ input[type=text]::placeholder{color:var(--muted)}
 <div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  CONFIG
-// ═══════════════════════════════════════════════
-const VIDEO_SRC = 'https://vidfast.pro/movie/687163?autoPlay=true';
+//  &lang=en  — sets player UI language
+//  &sub=en   — requests English subtitle track
+// ═══════════════════════════════════════════════════
+const VIDEO_SRC = 'https://vidfast.pro/movie/687163?autoPlay=true&lang=en&sub=en&subtitle=en';
 
-// VidFast uses videojs internally. We try multiple postMessage formats
-// so at least one command lands regardless of player version.
-const PM = {
-  pause: [
-    'pause',
-    JSON.stringify({event:'command', func:'pause', args:[]}),
-    JSON.stringify({action:'pause'}),
-    JSON.stringify({type:'pause'}),
-    JSON.stringify({method:'pause'}),
-  ],
-  play: [
-    'play',
-    JSON.stringify({event:'command', func:'play', args:[]}),
-    JSON.stringify({action:'play'}),
-    JSON.stringify({type:'play'}),
-    JSON.stringify({method:'play'}),
-  ],
-  seek(t) { return [
-    JSON.stringify({event:'command', func:'seekTo', args:[t, true]}),
-    JSON.stringify({action:'seek', time:t}),
-    JSON.stringify({type:'seek', time:t}),
-    JSON.stringify({currentTime:t}),
-  ]; },
-};
+// ═══════════════════════════════════════════════════
+//  AD-REDIRECT BLOCKER
+//  We inject a script into the iframe's about:blank context
+//  BEFORE setting the src. This overrides window.open and
+//  navigation methods so ad scripts can't redirect us.
+//  Works because we write to the iframe document while it's
+//  still same-origin (about:blank), THEN navigate it.
+// ═══════════════════════════════════════════════════
+function injectAdBlock(iframe) {
+  try {
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head>
+<script>
+// Block any attempt to navigate parent or open popups
+window.open = function(){ return null; };
+var _origAssign = window.location.assign.bind(window.location);
+Object.defineProperty(window, 'location', {
+  get: function(){ return window._fakeLocation || window.location; },
+  set: function(v){ /* block */ },
+  configurable: true
+});
+// Also block top-level navigation
+if(window !== window.top){
+  Object.defineProperty(window.top, 'location', {
+    get: function(){ return {}; },
+    set: function(){ /* block */ },
+    configurable: true
+  });
+}
+<\/script>
+</head><body></body></html>`);
+    doc.close();
+  } catch(e) {
+    // If injection fails (already navigated), that's fine — it's a best-effort
+    console.warn('Ad blocker injection failed:', e.message);
+  }
+}
 
-// ═══════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════
-let peer, conn, myId;
-let connected = false;
-let syncLock  = false;
-let currentTs = 0;
-
+// ═══════════════════════════════════════════════════
+//  POSTMESSAGE COMMANDS — try all known formats
+// ═══════════════════════════════════════════════════
 const iframe = document.getElementById('vf');
 
-// ═══════════════════════════════════════════════
-//  PEERJS — use default cloud, no hardcoded host
-// ═══════════════════════════════════════════════
-function initPeer() {
-  peer = new Peer(undefined, {
-    config: { iceServers: [
+function pm(msgs){
+  for(const m of msgs){
+    try { iframe.contentWindow.postMessage(m,'*'); } catch(_){}
+  }
+}
+
+const CMD = {
+  pause: ()=> pm([
+    'pause',
+    '{"event":"command","func":"pause","args":[]}',
+    '{"action":"pause"}',
+    '{"type":"pause"}',
+    '{"method":"pause"}',
+    '{"player":"pause"}',
+  ]),
+  play: ()=> pm([
+    'play',
+    '{"event":"command","func":"play","args":[]}',
+    '{"action":"play"}',
+    '{"type":"play"}',
+    '{"method":"play"}',
+    '{"player":"play"}',
+  ]),
+  seek: t=> pm([
+    JSON.stringify({event:'command',func:'seekTo',args:[t,true]}),
+    JSON.stringify({action:'seek',time:t}),
+    JSON.stringify({type:'seek',time:t}),
+    JSON.stringify({currentTime:t}),
+    JSON.stringify({seek:t}),
+  ]),
+};
+
+// ═══════════════════════════════════════════════════
+//  PEERJS
+// ═══════════════════════════════════════════════════
+let peer, conn, myId, connected=false;
+
+function initPeer(){
+  peer = new Peer(undefined,{
+    config:{iceServers:[
       {urls:'stun:stun.l.google.com:19302'},
       {urls:'stun:stun1.l.google.com:19302'},
       {urls:'stun:global.stun.twilio.com:3478'},
-    ]},
-    debug: 0,
+    ]},debug:0,
   });
-
-  peer.on('open', id => {
-    myId = id;
-    document.getElementById('rc').textContent = id;
+  peer.on('open', id=>{
+    myId=id;
+    document.getElementById('rc').textContent=id;
     document.getElementById('hdot').classList.add('ok');
-    document.getElementById('clb').disabled = false;
-    const j = new URLSearchParams(location.search).get('join');
-    if (j && j !== id) {
-      document.getElementById('ji').value = j;
-      setTimeout(() => joinRoom(j), 500);
-    }
+    document.getElementById('clb').disabled=false;
+    const j=new URLSearchParams(location.search).get('join');
+    if(j && j!==id){ document.getElementById('ji').value=j; setTimeout(()=>joinRoom(j),500); }
   });
-
-  peer.on('connection', c => setupConn(c));
-
-  peer.on('error', err => {
-    const el = document.getElementById('perr');
-    el.style.display = 'block';
-    document.getElementById('hdot').classList.remove('ok');
-    document.getElementById('hdot').classList.add('err');
-    if (location.protocol === 'file:') {
-      el.innerHTML = '⚠ Plik otwarty jako <code>file://</code> — PeerJS wymaga HTTPS.<br>Wrzuć na GitHub Pages (patrz poradnik poniżej).';
-    } else if (err.type === 'network' || err.type === 'server-error') {
-      el.textContent = '⚠ Brak połączenia z serwerem relay. Ponawianie za 5 s…';
-      setTimeout(reinitPeer, 5000);
-    } else if (err.type === 'unavailable-id') {
-      reinitPeer();
+  peer.on('connection', c=>setupConn(c));
+  peer.on('error', err=>{
+    const el=document.getElementById('perr');
+    el.style.display='block';
+    document.getElementById('hdot').classList.replace?.('ok','err') || document.getElementById('hdot').classList.add('err');
+    if(location.protocol==='file:')
+      el.innerHTML='⚠ Otwarty jako <code>file://</code> — potrzebny HTTPS. Wrzuć na GitHub Pages.';
+    else if(err.type==='network'||err.type==='server-error'){
+      el.textContent='⚠ Brak relay. Retry za 5s…'; setTimeout(reinitPeer,5000);
     } else {
-      el.textContent = '⚠ ' + (err.message || err.type || 'Connection error');
+      el.textContent='⚠ '+(err.message||err.type||'Connection error');
     }
   });
-
-  peer.on('disconnected', () => { if (!peer.destroyed) peer.reconnect(); });
+  peer.on('disconnected',()=>{ if(!peer.destroyed) peer.reconnect(); });
 }
 
-function reinitPeer() {
-  if (peer && !peer.destroyed) peer.destroy();
-  initPeer();
+function reinitPeer(){ if(peer&&!peer.destroyed) peer.destroy(); initPeer(); }
+
+function joinRoom(id){
+  const t=id||document.getElementById('ji').value.trim();
+  if(!t) return;
+  if(!myId){ showToast('Jeszcze się łączy…'); return; }
+  const c=peer.connect(t,{reliable:true,serialization:'json'});
+  c.on('open',()=>setupConn(c));
+  c.on('error',e=>showToast('Błąd połączenia: '+(e.message||e)));
 }
 
-// ═══════════════════════════════════════════════
-//  CONNECT
-// ═══════════════════════════════════════════════
-function joinRoom(id) {
-  const target = id || document.getElementById('ji').value.trim();
-  if (!target) return;
-  if (!myId) { showToast('Jeszcze się łączy z relay…'); return; }
-  const c = peer.connect(target, { reliable: true, serialization: 'json' });
-  c.on('open', () => setupConn(c));
-  c.on('error', e => showToast('Nie udało się połączyć: ' + (e.message || e)));
-}
-
-function setupConn(c) {
-  conn = c;
-  conn.on('data', handleData);
-  conn.on('close', handleDisconnect);
-  conn.on('error', handleDisconnect);
+function setupConn(c){
+  conn=c;
+  conn.on('data',handleData);
+  conn.on('close',handleDisconnect);
+  conn.on('error',handleDisconnect);
   onConnected();
 }
 
-function onConnected() {
-  connected = true;
-  document.getElementById('setup').style.display = 'none';
-  document.getElementById('watch').style.display = 'flex';
+function onConnected(){
+  connected=true;
+  document.getElementById('setup').style.display='none';
+  document.getElementById('watch').style.display='flex';
   loadIframe();
   document.getElementById('pdot').classList.add('on');
-  document.getElementById('plbl').textContent = 'Partnerka połączona';
-  document.getElementById('rp').textContent = myId ? myId.slice(0,8)+'…' : '—';
-  sysMsg('🟢 Połączono. Użyj ▶ / ⏸ / ⟳ żeby synchronizować odtwarzanie.');
+  document.getElementById('plbl').textContent='Połączona ♥';
+  document.getElementById('rp').textContent=myId?myId.slice(0,8)+'…':'—';
+  sysMsg('🟢 Połączono. Użyj 🎬 3-2-1 Go! żeby zsynchronizować start.');
 }
 
-function handleDisconnect() {
-  connected = false;
+function handleDisconnect(){
+  connected=false;
   document.getElementById('pdot').classList.remove('on');
   document.getElementById('pdot').classList.add('off');
-  document.getElementById('plbl').textContent = 'Partnerka rozłączona';
+  document.getElementById('plbl').textContent='Rozłączona';
   sysMsg('🔴 Partnerka rozłączona.');
 }
 
-// ═══════════════════════════════════════════════
-//  IFRAME & SHIELD
-// ═══════════════════════════════════════════════
-function loadIframe() {
-  iframe.src = VIDEO_SRC;
+// ═══════════════════════════════════════════════════
+//  IFRAME LOAD + AD BLOCK
+// ═══════════════════════════════════════════════════
+function loadIframe(){
+  // Inject the ad-block script into the blank iframe BEFORE navigating it
+  injectAdBlock(iframe);
+  // Small delay so the write flushes, then navigate
+  setTimeout(()=>{ iframe.src = VIDEO_SRC; }, 50);
 
-  // Listen for postMessages from the player (timeupdate, play, pause events)
-  window.addEventListener('message', e => {
-    if (!e.data) return;
-    let d = e.data;
-    if (typeof d === 'string') { try { d = JSON.parse(d); } catch(_) { return; } }
-    // Track playback time
-    const t = d.currentTime ?? d.time ?? d.position ?? d.seconds;
-    if (typeof t === 'number' && t > 0) currentTs = t;
-    // Forward player-native pause/play to partner
-    if (syncLock) return;
-    const ev = String(d.event || d.type || d.action || '').toLowerCase();
-    if (ev === 'pause') broadcast({t:'sync', a:'pause', ts:currentTs});
-    if (ev === 'play')  broadcast({t:'sync', a:'play',  ts:currentTs});
+  // Listen for messages FROM the player
+  window.addEventListener('message', e=>{
+    if(!e.data) return;
+    let d=e.data;
+    if(typeof d==='string'){ try{ d=JSON.parse(d); }catch(_){ return; } }
+    // Track time
+    const t = d.currentTime??d.time??d.position??d.seconds;
+    if(typeof t==='number'&&t>0) currentTs=t;
+    // Forward native player events to partner
+    if(syncLock) return;
+    const ev=String(d.event||d.type||d.action||'').toLowerCase();
+    if(ev==='pause') broadcast({t:'sync',a:'pause',ts:currentTs});
+    if(ev==='play')  broadcast({t:'sync',a:'play', ts:currentTs});
   });
-
-  showBadge('Kliknij ▶ lub pauzę aby zsynchronizować');
 }
 
-// First click: eat the initial ad hijack, then retire shield
-function firstClick() {
-  document.getElementById('shield-first').classList.add('gone');
-  // Send a play signal into the player via postMessage in case it was waiting
-  setTimeout(() => playerSend(PM.play), 300);
-}
-
-function playerSend(msgs) {
-  for (const m of msgs) {
-    try { iframe.contentWindow.postMessage(m, '*'); } catch(_) {}
-  }
-}
-
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  SYNC
-// ═══════════════════════════════════════════════
-function doSync(action) {
-  if (!connected || !conn) { showToast('Brak połączenia z partnerką.'); return; }
+// ═══════════════════════════════════════════════════
+let syncLock=false, currentTs=0;
 
-  syncLock = true;
-  if (action === 'pause') playerSend(PM.pause);
-  if (action === 'play')  playerSend(PM.play);
-  if (action === 'seek')  playerSend(PM.seek(currentTs));
-  setTimeout(() => syncLock = false, 600);
-
-  broadcast({t:'sync', a:action, ts:currentTs});
-
-  const ids = {pause:'bp', play:'bpl', seek:'bs'};
-  const btn = document.getElementById(ids[action]);
-  if (btn) { btn.classList.add('pinging'); setTimeout(()=>btn.classList.remove('pinging'),500); }
-
-  sysMsg({pause:'⏸ Pauza wysłana.', play:'▶ Play wysłany.', seek:'⟳ Czas przesłany.'}[action]);
+function doSync(action){
+  if(!connected||!conn){ showToast('Brak połączenia.'); return; }
+  syncLock=true;
+  CMD[action]?.();
+  setTimeout(()=>syncLock=false,600);
+  broadcast({t:'sync',a:action,ts:currentTs});
+  const ids={pause:'bp',play:'bpl'};
+  const btn=document.getElementById(ids[action]);
+  if(btn){ btn.classList.add('pinging'); setTimeout(()=>btn.classList.remove('pinging'),500); }
+  sysMsg({pause:'⏸ Pauza wysłana.',play:'▶ Play wysłany.'}[action]);
 }
 
-function applySync(d) {
-  syncLock = true;
-  if (d.ts != null) { currentTs = d.ts; playerSend(PM.seek(d.ts)); }
-  if (d.a === 'pause') playerSend(PM.pause);
-  if (d.a === 'play')  playerSend(PM.play);
-  setTimeout(() => syncLock = false, 600);
-  sysMsg(d.a === 'pause' ? '⏸ Partnerka pauzuje.' : d.a === 'play' ? '▶ Partnerka odtwarza.' : '⟳ Zsynchronizowano do '+fmtTime(d.ts));
+function applySync(d){
+  syncLock=true;
+  if(d.ts!=null){ currentTs=d.ts; CMD.seek(d.ts); }
+  if(d.a==='pause') CMD.pause();
+  if(d.a==='play')  CMD.play();
+  setTimeout(()=>syncLock=false,600);
+  sysMsg(d.a==='pause'?'⏸ Partnerka pauzuje.':d.a==='play'?'▶ Partnerka odtwarza.':'⟳ Zsynchronizowano.');
 }
 
-function broadcast(data) {
-  if (connected && conn) try { conn.send(data); } catch(_) {}
+function broadcast(data){ if(connected&&conn) try{ conn.send(data); }catch(_){} }
+
+// ═══════════════════════════════════════════════════
+//  3-2-1 GO! COUNTDOWN
+// ═══════════════════════════════════════════════════
+let cdRunning=false;
+
+function startCountdown(){
+  if(!connected||!conn){ showToast('Brak połączenia.'); return; }
+  if(cdRunning) return;
+  broadcast({t:'countdown'});
+  runCountdown();
 }
 
-// ═══════════════════════════════════════════════
-//  DATA
-// ═══════════════════════════════════════════════
-function handleData(d) {
-  if (!d) return;
-  if (d.t === 'sync') applySync(d);
-  if (d.t === 'chat') addMsg('partner', d.text);
+function runCountdown(){
+  if(cdRunning) return;
+  cdRunning=true;
+  const el=document.getElementById('countdown');
+  const num=document.getElementById('cd-num');
+  el.style.display='flex';
+  let n=3;
+  num.textContent=n;
+
+  const iv=setInterval(()=>{
+    n--;
+    if(n>0){
+      num.textContent=n;
+    } else {
+      clearInterval(iv);
+      num.textContent='▶';
+      // Immediately play after "GO"
+      setTimeout(()=>{
+        CMD.play();
+        el.style.display='none';
+        cdRunning=false;
+        sysMsg('🎬 GO! — play started.');
+        broadcast({t:'sync',a:'play',ts:currentTs});
+      }, 800);
+    }
+  }, 1000);
 }
 
-function sendChat() {
-  const inp = document.getElementById('ci');
-  const text = inp.value.trim();
-  if (!text || !connected || !conn) return;
-  conn.send({t:'chat', text});
-  addMsg('me', text);
-  inp.value = '';
+// ═══════════════════════════════════════════════════
+//  DATA HANDLER
+// ═══════════════════════════════════════════════════
+function handleData(d){
+  if(!d) return;
+  if(d.t==='sync') applySync(d);
+  if(d.t==='chat') addMsg('partner',d.text);
+  if(d.t==='countdown') runCountdown(); // partner started countdown
 }
 
-// ═══════════════════════════════════════════════
-//  UI
-// ═══════════════════════════════════════════════
-function leaveRoom() { if(conn) conn.close(); location.reload(); }
+function sendChat(){
+  const inp=document.getElementById('ci');
+  const text=inp.value.trim();
+  if(!text||!connected||!conn) return;
+  conn.send({t:'chat',text});
+  addMsg('me',text);
+  inp.value='';
+}
 
-function copyLink() {
-  if (!myId) return;
-  const url = location.href.split('?')[0] + '?join=' + encodeURIComponent(myId);
+// ═══════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS (when focus is NOT inside iframe)
+// ═══════════════════════════════════════════════════
+document.addEventListener('keydown', e=>{
+  // Don't fire if user is typing in a chat input
+  if(document.activeElement===document.getElementById('ci')) return;
+  // Don't fire if iframe has focus (activeElement would be body or iframe)
+  if(document.activeElement===iframe) return;
+  if(!connected) return;
+  if(e.code==='Space'){ e.preventDefault(); doSync('play'); }
+  if(e.code==='KeyP')  { e.preventDefault(); doSync('pause'); }
+  if(e.code==='KeyG')  { e.preventDefault(); startCountdown(); }
+});
+
+// Clicking the syncbar returns focus to the page so hotkeys work
+document.getElementById('syncbar')?.addEventListener('click', ()=>{ document.body.focus(); });
+
+// ═══════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════
+function leaveRoom(){ if(conn) conn.close(); location.reload(); }
+
+function copyLink(){
+  if(!myId) return;
+  const url=location.href.split('?')[0]+'?join='+encodeURIComponent(myId);
   navigator.clipboard.writeText(url)
-    .then(() => showToast('Link skopiowany — wyślij jej ♥'))
-    .catch(() => prompt('Skopiuj link:', url));
+    .then(()=>showToast('Link skopiowany — wyślij jej ♥'))
+    .catch(()=>prompt('Skopiuj link:',url));
 }
 
-function dimOv(e) {
-  if (e && e.target !== document.getElementById('ov') && e.target !== document.getElementById('od')) return;
-  document.getElementById('ov').style.display = 'none';
-}
+function showHelp(){ document.getElementById('hm').style.display='flex'; }
+function hideHelp(e){ if(!e||!e.target.closest('#hc')) document.getElementById('hm').style.display='none'; }
 
-function showHelp() { document.getElementById('hm').style.display = 'flex'; }
-function hideHelp(e) {
-  if (!e || !e.target.closest('#hc')) document.getElementById('hm').style.display = 'none';
-}
-
-function showBadge(text) {
-  const b = document.getElementById('badge');
-  b.textContent = text; b.classList.add('show');
-  setTimeout(() => b.classList.remove('show'), 5000);
-}
-
-function addMsg(who, text) {
-  const box = document.getElementById('msgs');
-  const d = document.createElement('div');
-  d.className = 'msg ' + who;
-  if (who !== 'sys') {
-    const lbl = document.createElement('div');
-    lbl.className = 'who';
-    lbl.textContent = who === 'me' ? 'Ty' : 'Ona';
+function addMsg(who,text){
+  const box=document.getElementById('msgs');
+  const d=document.createElement('div');
+  d.className='msg '+who;
+  if(who!=='sys'){
+    const lbl=document.createElement('div');
+    lbl.className='who';
+    lbl.textContent=who==='me'?'Ty':'Ona';
     d.appendChild(lbl);
   }
-  const sp = document.createElement('div');
-  sp.textContent = text;
+  const sp=document.createElement('div');
+  sp.textContent=text;
   d.appendChild(sp);
   box.appendChild(d);
-  box.scrollTop = box.scrollHeight;
+  box.scrollTop=box.scrollHeight;
 }
-function sysMsg(t) { addMsg('sys', t); }
+function sysMsg(t){ addMsg('sys',t); }
 
 let toastT;
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
   el.classList.add('show');
   clearTimeout(toastT);
-  toastT = setTimeout(() => el.classList.remove('show'), 3000);
-}
-function fmtTime(s) {
-  if (s == null) return '?';
-  return `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
+  toastT=setTimeout(()=>el.classList.remove('show'),3000);
 }
 
+// ── BOOT ──
 initPeer();
 </script>
 </body>
