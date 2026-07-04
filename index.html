@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#11100f" />
+    <title>Biblioteka Oli ❤️</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="app-shell" id="appShell">
+      <header class="topbar">
+        <button class="icon-button" id="menuButton" type="button" aria-label="Otwórz menu" aria-expanded="false" aria-controls="sidePanel">
+          <i data-lucide="menu"></i>
+        </button>
+
+        <div class="brand" aria-label="Biblioteka Oli serduszko">
+          <span>Biblioteka Oli ❤️</span>
+          <small id="bookTitle">Buszujący w zbożu</small>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-button" id="timerButton" type="button" aria-label="Timer czytania">
+            <i data-lucide="timer"></i>
+          </button>
+          <button class="icon-button" id="fullscreenButton" type="button" aria-label="Pełny ekran">
+            <i data-lucide="maximize"></i>
+          </button>
+        </div>
+      </header>
+
+      <aside class="side-panel" id="sidePanel" aria-label="Ustawienia czytnika">
+        <div class="panel-header">
+          <div>
+            <strong>Ustawienia</strong>
+            <span>czytnik pod iPada</span>
+          </div>
+          <button class="icon-button subtle" id="closePanelButton" type="button" aria-label="Zamknij menu">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <section class="control-group">
+          <label class="control-label" for="bookFile">Książka</label>
+          <label class="file-drop" for="bookFile">
+            <i data-lucide="upload"></i>
+            <span>Wgraj plik .txt lub .md</span>
+          </label>
+          <input id="bookFile" type="file" accept=".txt,.md,text/plain,text/markdown" />
+          <button class="text-button" id="clearBookButton" type="button">Wyczyść zapisaną książkę</button>
+        </section>
+
+        <section class="control-group toc-section">
+          <span class="control-label">Rozdziały</span>
+          <nav class="toc-list" id="tocList" aria-label="Spis rozdziałów"></nav>
+        </section>
+
+        <section class="control-group">
+          <span class="control-label">Tryb</span>
+          <div class="segmented" role="group" aria-label="Tryb czytania">
+            <button id="normalModeButton" type="button" class="active">Normalny</button>
+            <button id="loveModeButton" type="button">Miłosny</button>
+          </div>
+        </section>
+
+        <section class="control-group">
+          <label class="control-label" for="fontFamilySelect">Czcionka</label>
+          <select id="fontFamilySelect">
+            <option value="serif">Literacka</option>
+            <option value="sans">Nowoczesna</option>
+            <option value="dyslexic">Czytelna</option>
+          </select>
+        </section>
+
+        <section class="control-group sliders">
+          <label for="fontSizeRange">
+            <span>Rozmiar</span>
+            <output id="fontSizeValue">21 px</output>
+          </label>
+          <input id="fontSizeRange" type="range" min="17" max="30" value="21" />
+
+          <label for="brightnessRange">
+            <span>Jasność</span>
+            <output id="brightnessValue">86%</output>
+          </label>
+          <input id="brightnessRange" type="range" min="62" max="100" value="86" />
+        </section>
+
+        <section class="control-group timer-card" id="timerPanel">
+          <label class="control-label" for="timerMinutes">Timer czytania</label>
+          <div class="timer-row">
+            <input id="timerMinutes" type="number" min="1" max="180" value="25" inputmode="numeric" />
+            <button class="primary-button" id="startTimerButton" type="button">
+              <i data-lucide="play"></i>
+              Start
+            </button>
+            <button class="icon-button subtle" id="resetTimerButton" type="button" aria-label="Reset timera">
+              <i data-lucide="rotate-ccw"></i>
+            </button>
+          </div>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+        </section>
+      </aside>
+
+      <main class="reader-stage">
+        <section class="reader-card" aria-label="Czytnik ebooka">
+          <div class="reader-meta">
+            <span id="modeBadge">Tryb normalny</span>
+            <span id="progressLabel">Strona 1 / 1</span>
+          </div>
+
+          <article class="reader-viewport" id="readerViewport" tabindex="0" aria-label="Treść książki">
+            <div class="reader-content" id="readerContent">
+              <div class="empty-state" id="emptyState">
+                <i data-lucide="book-open-text"></i>
+                <h1>Wgraj książkę dla Oli</h1>
+                <p>Dodaj plik tekstowy, a czytnik zapamięta go na tym urządzeniu razem z ostatnią stroną, ustawieniami i trybem.</p>
+              </div>
+            </div>
+          </article>
+
+          <div class="reader-footer">
+            <button class="nav-button" id="prevPageButton" type="button" aria-label="Poprzednia strona">
+              <i data-lucide="chevron-left"></i>
+            </button>
+            <input id="pageRange" type="range" min="1" max="1" value="1" aria-label="Postęp czytania" />
+            <button class="nav-button" id="nextPageButton" type="button" aria-label="Następna strona">
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
