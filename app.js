@@ -37,6 +37,13 @@ window.addEventListener('DOMContentLoaded', () => {
     renderBook();
     updateTimerDisplay();
     refreshIcons();
+    // Re-paginate once fonts and the full page have settled, otherwise the
+    // first measurement can run against an unstyled/zero-size layout and the
+    // text ends up positioned off-screen (only reappearing after a resize).
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => schedulePagination(state.currentPage));
+    }
+    window.addEventListener('load', () => schedulePagination(state.currentPage), { once: true });
   });
 });
 
@@ -113,6 +120,15 @@ function bindEvents() {
   window.addEventListener('keydown', handleGlobalKeys);
   window.addEventListener('resize', () => schedulePagination(state.currentPage));
   document.addEventListener('fullscreenchange', refreshFullscreenIcon);
+
+  // Re-paginate whenever the reader viewport actually gets (or changes) its
+  // size. This is the reliable trigger: on first load the viewport starts at
+  // zero height for a few frames, and this fires the moment layout settles,
+  // as well as on rotation / fullscreen, so the text never stays blank.
+  if (window.ResizeObserver) {
+    const observer = new ResizeObserver(() => schedulePagination(state.currentPage));
+    observer.observe(elements.readerViewport);
+  }
 }
 
 function loadState() {
@@ -284,12 +300,14 @@ function prepareBookBlocks(text) {
   return blocks;
 }
 
-function schedulePagination(targetPage) {
+function schedulePagination(targetPage = state.currentPage) {
   clearTimeout(resizeFrame);
-  resizeFrame = window.setTimeout(() => paginate(targetPage), 0);
+  // Debounce with a short timeout so a burst of ResizeObserver / resize events
+  // coalesces into a single pagination pass once the layout has settled.
+  resizeFrame = window.setTimeout(() => paginate(targetPage), 80);
 }
 
-function paginate(targetPage = state.currentPage) {
+function paginate(targetPage = state.currentPage, attempt = 0) {
   if (!state.content.trim()) {
     updateProgress();
     return;
@@ -299,6 +317,12 @@ function paginate(targetPage = state.currentPage) {
   const viewportHeight = elements.readerViewport.clientHeight;
 
   if (!viewportWidth || !viewportHeight) {
+    // Layout is not ready yet (zero-size viewport). Retry a few times instead
+    // of bailing out silently, which used to leave the reader blank until the
+    // user forced a resize / fullscreen.
+    if (attempt < 30) {
+      requestAnimationFrame(() => paginate(targetPage, attempt + 1));
+    }
     return;
   }
 
@@ -310,6 +334,9 @@ function paginate(targetPage = state.currentPage) {
   elements.readerContent.style.setProperty('--page-width', `${pageWidth}px`);
   elements.readerContent.style.columnGap = `${gap}px`;
 
+  // Measure after a tick so the browser has finished laying out the new
+  // multi-column width before we read scrollWidth (reading it too early
+  // reports a single page for very long books).
   window.setTimeout(() => {
     const totalWidth = elements.readerContent.scrollWidth;
     pageStep = pageWidth + gap;
@@ -319,7 +346,7 @@ function paginate(targetPage = state.currentPage) {
     updateProgress();
     renderToc();
     saveState();
-  }, 0);
+  }, 60);
 }
 
 function goToPage(page, persist = true) {
@@ -495,6 +522,10 @@ function toggleTimer() {
   if (timerRemaining <= 0) {
     timerRemaining = state.timerMinutes * 60;
   }
+
+  // Reflect the starting time immediately instead of waiting a second for the
+  // first tick (otherwise, after finishing, the display stays stuck at 00:00).
+  updateTimerDisplay();
 
   timerInterval = window.setInterval(() => {
     timerRemaining -= 1;
