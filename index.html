@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#11100f" />
     <title>Biblioteka Oli ❤️</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
     <script src="app.js" defer></script>
@@ -23,8 +26,8 @@
         </button>
 
         <div class="brand" aria-label="Biblioteka Oli serduszko">
-          <span>Biblioteka Oli ❤️</span>
-          <small id="bookTitle">Buszujący w zbożu</small>
+          <span>Buszujący w zbożu</span>
+          <small id="bookTitle">Biblioteka Oli</small>
         </div>
 
         <div class="top-actions">
@@ -36,6 +39,26 @@
           </button>
         </div>
       </header>
+
+      <div class="timer-popup" id="timerPanel" aria-label="Timer czytania">
+        <div class="timer-popup-header">
+          <span>Timer czytania</span>
+          <button class="icon-button subtle" id="closeTimerButton" type="button" aria-label="Zamknij timer">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <div class="timer-row">
+          <input id="timerMinutes" type="number" min="1" max="180" value="25" inputmode="numeric" />
+          <button class="primary-button" id="startTimerButton" type="button">
+            <i data-lucide="play"></i>
+            Start
+          </button>
+          <button class="icon-button subtle" id="resetTimerButton" type="button" aria-label="Reset timera">
+            <i data-lucide="rotate-ccw"></i>
+          </button>
+        </div>
+      </div>
 
       <aside class="side-panel" id="sidePanel" aria-label="Ustawienia czytnika">
         <div class="panel-header">
@@ -72,6 +95,15 @@
         </section>
 
         <section class="control-group">
+          <label class="control-label" for="themeSelect">Motyw</label>
+          <select id="themeSelect">
+            <option value="dark">Ciemny (domyślny)</option>
+            <option value="light">Elegancki jasny</option>
+            <option value="oldbook">Stara książka</option>
+          </select>
+        </section>
+
+        <section class="control-group">
           <label class="control-label" for="fontFamilySelect">Czcionka</label>
           <select id="fontFamilySelect">
             <option value="serif">Literacka</option>
@@ -94,20 +126,6 @@
           <input id="brightnessRange" type="range" min="62" max="100" value="86" />
         </section>
 
-        <section class="control-group timer-card" id="timerPanel">
-          <label class="control-label" for="timerMinutes">Timer czytania</label>
-          <div class="timer-row">
-            <input id="timerMinutes" type="number" min="1" max="180" value="25" inputmode="numeric" />
-            <button class="primary-button" id="startTimerButton" type="button">
-              <i data-lucide="play"></i>
-              Start
-            </button>
-            <button class="icon-button subtle" id="resetTimerButton" type="button" aria-label="Reset timera">
-              <i data-lucide="rotate-ccw"></i>
-            </button>
-          </div>
-          <div class="timer-display" id="timerDisplay">25:00</div>
-        </section>
       </aside>
 
       <main class="reader-stage">
@@ -125,6 +143,7 @@
                 <p>Dodaj plik tekstowy, a czytnik zapamięta go na tym urządzeniu razem z ostatnią stroną, ustawieniami i trybem.</p>
               </div>
             </div>
+            <div class="love-note-overlay" id="loveNoteOverlay" aria-hidden="true"></div>
           </article>
 
           <div class="reader-footer">

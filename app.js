@@ -8,6 +8,7 @@ const defaultState = {
   currentPage: 1,
   totalPages: 1,
   mode: 'normal',
+  theme: 'dark',
   fontSize: 21,
   brightness: 86,
   fontFamily: 'serif',
@@ -15,10 +16,20 @@ const defaultState = {
 };
 
 const loveNotes = [
-  'Olu, ta strona jest tylko nasza.',
-  'Jeszcze jeden rozdzial, najspokojniej.',
-  'Czytaj powoli. Ja wybieram Ciebie.',
-  'Tu jest cicho, cieplo i po Twojemu.'
+  'Droga czytelniczko, kocham cie 🤍  ~Łukasz',
+  'STOP, bez ruszania sie wyślij mi zdjecie twojej aktualnej pozycji',
+  'Pisarz miłości mówią mi',
+  'Halo halo tu ksiązka',
+  'Psst 🤭, 1 osoba teraz o tobie myśli',
+  '"Ten Łukasz to spoko gość, chyba za niego wyjdę, bo jest taki zabawny i silny"',
+  'Najpierw czytanie potem stukanie 😏',
+  'Co za ślicznotka 😍, hej mała',
+  'Ola, Onak, Nago 🤯🥵',
+  'Wszyskie słowa na tej stronie tracą sens gdy patrze w twoje oczy',
+  'Uhh gorąco na tej stronie, idź stąd bo sie spale!',
+  'Ale bym cie teraz zbałamucił',
+  'Jeśli to czytasz to wiesz ze jesteś dla mnie najważniejsza...',
+  '...i najcenniejsza'
 ];
 
 const elements = {};
@@ -52,9 +63,10 @@ function bindElements() {
     'appShell', 'menuButton', 'sidePanel', 'closePanelButton', 'bookTitle', 'bookFile',
     'clearBookButton', 'normalModeButton', 'loveModeButton', 'fontFamilySelect',
     'fontSizeRange', 'fontSizeValue', 'brightnessRange', 'brightnessValue', 'timerButton',
-    'timerPanel', 'timerMinutes', 'startTimerButton', 'resetTimerButton', 'timerDisplay',
-    'fullscreenButton', 'readerViewport', 'readerContent', 'emptyState', 'modeBadge',
-    'progressLabel', 'prevPageButton', 'nextPageButton', 'pageRange', 'tocList', 'toast'
+    'timerPanel', 'closeTimerButton', 'timerMinutes', 'startTimerButton', 'resetTimerButton',
+    'timerDisplay', 'themeSelect', 'fullscreenButton', 'readerViewport', 'readerContent',
+    'emptyState', 'modeBadge', 'progressLabel', 'prevPageButton', 'nextPageButton',
+    'pageRange', 'tocList', 'toast', 'loveNoteOverlay'
   ];
 
   ids.forEach((id) => {
@@ -66,6 +78,15 @@ function bindEvents() {
   elements.menuButton.addEventListener('click', openPanel);
   elements.closePanelButton.addEventListener('click', closePanel);
   document.addEventListener('click', closePanelFromBackdrop);
+  document.addEventListener('click', (event) => {
+    if (
+      elements.timerPanel.classList.contains('open') &&
+      !elements.timerPanel.contains(event.target) &&
+      !elements.timerButton.contains(event.target)
+    ) {
+      closeTimerPopup();
+    }
+  });
 
   elements.bookFile.addEventListener('change', handleBookUpload);
   elements.clearBookButton.addEventListener('click', clearBook);
@@ -95,9 +116,15 @@ function bindEvents() {
     applyReaderSettings();
   });
 
-  elements.timerButton.addEventListener('click', () => {
-    openPanel();
-    elements.timerMinutes.focus();
+  elements.timerButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleTimerPopup();
+  });
+
+  elements.closeTimerButton.addEventListener('click', closeTimerPopup);
+
+  elements.themeSelect.addEventListener('change', (event) => {
+    setTheme(event.target.value);
   });
 
   elements.timerMinutes.addEventListener('change', (event) => {
@@ -177,7 +204,9 @@ function applyStateToControls() {
   elements.brightnessValue.value = `${state.brightness}%`;
   elements.fontFamilySelect.value = state.fontFamily;
   elements.timerMinutes.value = state.timerMinutes;
+  elements.themeSelect.value = state.theme || 'dark';
   applyReaderSettings();
+  setTheme(state.theme || 'dark');
   updateModeControls();
 }
 
@@ -240,10 +269,11 @@ function formatBookContent(text) {
       };
 
       chapters.push(chapter);
-      return `<h2 id="${chapter.id}" data-chapter-index="${chapters.length - 1}">${escaped}</h2>`;
+      const isFirst = chapters.length === 1;
+      return `<h2 id="${chapter.id}" data-chapter-index="${chapters.length - 1}"${isFirst ? ' class="first-chapter"' : ''}>${escaped}</h2>`;
     }
 
-    return `<p>${escaped}</p>`;
+    return `<p class="para">${escaped}</p>`;
   }).join('');
 }
 
@@ -360,6 +390,7 @@ function goToPage(page, persist = true) {
 
   elements.readerContent.style.transform = `translateX(${-offset}px)`;
   updateProgress();
+  updateLoveNote();
 
   if (persist) {
     saveState();
@@ -408,10 +439,61 @@ function renderToc() {
   });
 }
 
+function toggleTimerPopup() {
+  const isOpen = elements.timerPanel.classList.contains('open');
+  if (isOpen) {
+    closeTimerPopup();
+  } else {
+    closePanel();
+    elements.timerPanel.classList.add('open');
+    elements.timerMinutes.focus();
+  }
+}
+
+function closeTimerPopup() {
+  elements.timerPanel.classList.remove('open');
+}
+
+function updateLoveNote() {
+  if (!elements.loveNoteOverlay) return;
+
+  if (state.mode !== 'love') {
+    elements.loveNoteOverlay.textContent = '';
+    elements.loveNoteOverlay.classList.remove('visible');
+    return;
+  }
+
+  const note = loveNotes[(state.currentPage - 1) % loveNotes.length];
+  if (note) {
+    // Remove visible, swap text, then re-add on next two frames
+    // so the slide-in transition replays on every page turn.
+    elements.loveNoteOverlay.classList.remove('visible');
+    elements.loveNoteOverlay.textContent = note;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        elements.loveNoteOverlay.classList.add('visible');
+      });
+    });
+  } else {
+    elements.loveNoteOverlay.textContent = '';
+    elements.loveNoteOverlay.classList.remove('visible');
+  }
+}
+
+function setTheme(theme) {
+  state.theme = theme;
+  document.body.classList.remove('theme-light', 'theme-oldbook');
+  if (theme !== 'dark') {
+    document.body.classList.add(`theme-${theme}`);
+  }
+  saveState();
+}
+
 function setMode(mode) {
   state.mode = mode;
   document.body.classList.toggle('love-mode', mode === 'love');
   updateModeControls();
+  updateLoveNote();
   saveState();
 
   if (mode === 'love') {
@@ -503,6 +585,7 @@ function handleGlobalKeys(event) {
 
   if (event.key === 'Escape') {
     closePanel();
+    closeTimerPopup();
   }
 
   if (event.key.toLowerCase() === 'f') {
